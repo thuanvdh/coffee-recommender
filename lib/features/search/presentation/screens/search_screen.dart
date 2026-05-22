@@ -18,17 +18,69 @@ class SearchScreen extends ConsumerStatefulWidget {
 }
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
+  late final TextEditingController _searchController;
+
   @override
   void initState() {
     super.initState();
 
+    _searchController = TextEditingController(
+      text: widget.initialIntent?.query ?? '',
+    );
+    _searchInitialIntent(widget.initialIntent);
+  }
+
+  @override
+  void didUpdateWidget(covariant SearchScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
     final initialIntent = widget.initialIntent;
-    if (initialIntent != null && initialIntent != SearchIntent()) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ref.read(searchNotifierProvider.notifier).search(initialIntent);
-      });
+    if (oldWidget.initialIntent == initialIntent) return;
+
+    _syncSearchController(initialIntent?.query ?? '');
+    _searchInitialIntent(initialIntent);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _searchInitialIntent(SearchIntent? initialIntent) {
+    if (!_hasInitialIntent(initialIntent)) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(searchNotifierProvider.notifier).search(initialIntent!);
+    });
+  }
+
+  bool _hasInitialIntent(SearchIntent? initialIntent) {
+    return initialIntent != null && initialIntent != SearchIntent();
+  }
+
+  void _syncSearchController(String query) {
+    if (_searchController.text == query) return;
+
+    _searchController.value = _searchController.value.copyWith(
+      text: query,
+      selection: TextSelection.collapsed(offset: query.length),
+      composing: TextRange.empty,
+    );
+  }
+
+  String _activeQuery(SearchState state) {
+    if (state.searchQuery.isNotEmpty) {
+      return state.searchQuery;
     }
+
+    final initialIntent = widget.initialIntent;
+    if (initialIntent != null && initialIntent.query.isNotEmpty) {
+      return initialIntent.query;
+    }
+
+    return state.searchQuery;
   }
 
   void _showFilterBottomSheet(BuildContext context) {
@@ -44,6 +96,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(searchNotifierProvider);
     final notifier = ref.read(searchNotifierProvider.notifier);
+    _syncSearchController(_activeQuery(state));
 
     // List of active filters
     final activeFilters = <String>[];
@@ -69,6 +122,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               children: [
                 Expanded(
                   child: SearchBar(
+                    controller: _searchController,
                     hintText: 'Nhập tên quán, địa chỉ...',
                     leading: const Icon(Icons.search),
                     onSubmitted: (query) => notifier.updateQuery(query),

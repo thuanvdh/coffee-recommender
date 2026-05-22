@@ -297,6 +297,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               size: 16,
                             ),
                             onPressed: () {
+                              if (preset.id == 'near_me') {
+                                _handleNearMe();
+                                return;
+                              }
                               context.go('/search', extra: preset.intent);
                             },
                             backgroundColor: cardBgColor,
@@ -438,7 +442,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ],
                           ),
                           TextButton(
-                            onPressed: () => context.go('/search?status=new'),
+                            onPressed: () => context.go('/search'),
                             child: Row(
                               children: [
                                 Text('Xem tất cả',
