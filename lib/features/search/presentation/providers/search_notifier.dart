@@ -28,6 +28,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
   final SearchRepository _repository;
   final SearchQueryBuilder _queryBuilder;
   final ShopRankingService _rankingService;
+  int _searchRequestId = 0;
 
   @override
   SearchState get debugState => state;
@@ -74,13 +75,18 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
   Future<void> search(SearchIntent intent, {SearchFilter? filter}) async {
     final effectiveFilter = filter ?? SearchFilter();
-    state = state.copyWith(
-      status: SearchStateStatus.loading,
+    final requestId = ++_searchRequestId;
+    state = _withCompatibilityFields(
+      state.copyWith(
+        status: SearchStateStatus.loading,
+        intent: intent,
+        filter: effectiveFilter,
+        isLoading: true,
+        failure: null,
+        error: null,
+      ),
       intent: intent,
       filter: effectiveFilter,
-      isLoading: true,
-      failure: null,
-      error: null,
     );
 
     final queryParameters = _queryBuilder.build(
@@ -90,6 +96,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
     final result = await _repository.fetchShops(
       queryParameters: Map<String, dynamic>.from(queryParameters),
     );
+    if (requestId != _searchRequestId) {
+      return;
+    }
 
     switch (result) {
       case Success<List<CoffeeShop>>(:final value):
@@ -107,17 +116,21 @@ class SearchNotifier extends StateNotifier<SearchState> {
     required List<CoffeeShop> shops,
   }) {
     final rankedShops = _rankingService.rank(shops: shops, intent: intent);
-    state = state.copyWith(
-      status: rankedShops.isEmpty
-          ? SearchStateStatus.empty
-          : SearchStateStatus.success,
+    state = _withCompatibilityFields(
+      state.copyWith(
+        status: rankedShops.isEmpty
+            ? SearchStateStatus.empty
+            : SearchStateStatus.success,
+        intent: intent,
+        filter: filter,
+        rankedShops: rankedShops,
+        failure: null,
+        isLoading: false,
+        shops: rankedShops.map((item) => item.shop).toList(),
+        error: null,
+      ),
       intent: intent,
       filter: filter,
-      rankedShops: rankedShops,
-      failure: null,
-      isLoading: false,
-      shops: rankedShops.map((item) => item.shop).toList(),
-      error: null,
     );
   }
 
@@ -132,28 +145,52 @@ class SearchNotifier extends StateNotifier<SearchState> {
         shops: cachedShops,
         intent: intent,
       );
-      state = state.copyWith(
-        status: SearchStateStatus.stale,
+      state = _withCompatibilityFields(
+        state.copyWith(
+          status: SearchStateStatus.stale,
+          intent: intent,
+          filter: filter,
+          rankedShops: rankedCachedShops,
+          failure: failure,
+          isLoading: false,
+          shops: rankedCachedShops.map((item) => item.shop).toList(),
+          error: failure.userMessage,
+        ),
         intent: intent,
         filter: filter,
-        rankedShops: rankedCachedShops,
-        failure: failure,
-        isLoading: false,
-        shops: rankedCachedShops.map((item) => item.shop).toList(),
-        error: failure.userMessage,
       );
       return;
     }
 
-    state = state.copyWith(
-      status: SearchStateStatus.failure,
+    state = _withCompatibilityFields(
+      state.copyWith(
+        status: SearchStateStatus.failure,
+        intent: intent,
+        filter: filter,
+        rankedShops: const [],
+        failure: failure,
+        isLoading: false,
+        shops: const [],
+        error: failure.userMessage,
+      ),
       intent: intent,
       filter: filter,
-      rankedShops: const [],
-      failure: failure,
-      isLoading: false,
-      shops: const [],
-      error: failure.userMessage,
+    );
+  }
+
+  SearchState _withCompatibilityFields(
+    SearchState base, {
+    required SearchIntent intent,
+    required SearchFilter filter,
+  }) {
+    return base.copyWith(
+      searchQuery: intent.query,
+      selectedDistrict: filter.district ?? intent.district,
+      selectedPurpose: filter.purpose ?? _firstTag(intent.purposeTags),
+      selectedSpace: filter.space ?? _firstTag(intent.spaceTags),
+      selectedAmenity: filter.amenity ?? _firstTag(intent.amenityTags),
+      latitude: intent.latitude,
+      longitude: intent.longitude,
     );
   }
 
@@ -186,6 +223,16 @@ class SearchNotifier extends StateNotifier<SearchState> {
       return const [];
     }
     return [trimmed];
+  }
+
+  String? _firstTag(List<String> values) {
+    for (final value in values) {
+      final trimmed = value.trim();
+      if (trimmed.isNotEmpty) {
+        return trimmed;
+      }
+    }
+    return null;
   }
 
   Future<Review?> submitReview(

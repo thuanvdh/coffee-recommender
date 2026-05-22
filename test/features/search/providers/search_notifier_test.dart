@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:coffee_recommender/core/network/dio_client.dart';
 import 'package:coffee_recommender/core/result/app_failure.dart';
 import 'package:coffee_recommender/core/result/result.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/data/repositories/search_repository.dart';
+import 'package:coffee_recommender/features/search/domain/models/search_filter.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:coffee_recommender/features/search/domain/services/search_query_builder.dart';
 import 'package:coffee_recommender/features/search/domain/services/shop_ranking_service.dart';
@@ -76,6 +79,90 @@ void main() {
       expect(state.isLoading, isFalse);
       expect(state.rankedShops.single.shop, _shop);
       expect(state.rankedShops.single.score, 50);
+      expect(state.shops, [_shop]);
+      expect(state.error, isNull);
+    });
+
+    test('older delayed search cannot overwrite newer results', () async {
+      final delayedRepository = DelayedSearchRepository(dioClient);
+      final subject = SearchNotifier(
+        dioClient,
+        repository: delayedRepository,
+        queryBuilder: SearchQueryBuilder(),
+        rankingService: ShopRankingService(),
+      );
+
+      final olderSearch = subject.search(SearchIntent(query: 'old'));
+      final newerSearch = subject.search(SearchIntent(query: 'new'));
+
+      delayedRepository.completeQuery(
+        'new',
+        Result.success([_newerShop]),
+      );
+      await newerSearch;
+
+      expect(subject.debugState.status, SearchStateStatus.success);
+      expect(subject.debugState.searchQuery, 'new');
+      expect(subject.debugState.shops, [_newerShop]);
+
+      delayedRepository.completeQuery(
+        'old',
+        Result.success([_olderShop]),
+      );
+      await olderSearch;
+
+      expect(subject.debugState.status, SearchStateStatus.success);
+      expect(subject.debugState.searchQuery, 'new');
+      expect(subject.debugState.shops, [_newerShop]);
+    });
+
+    test('typed search populates compatibility fields from intent and filter',
+        () async {
+      when(
+        () => repository.fetchShops(
+          queryParameters: {
+            'search': 'pour over',
+            'purpose': 'Hẹn hò',
+            'amenity': 'Ổ cắm',
+            'space': 'Sân vườn',
+            'district': 'Sơn Trà',
+            'lat': 16.07,
+            'lon': 108.22,
+          },
+        ),
+      ).thenAnswer((_) async => Result.success([_shop]));
+
+      final subject = notifier();
+      await subject.search(
+        SearchIntent(
+          query: 'pour over',
+          district: 'Hải Châu',
+          purposeTags: ['Làm việc'],
+          amenityTags: ['Máy lạnh'],
+          spaceTags: ['Yên tĩnh'],
+          nearMe: true,
+          latitude: 16.07,
+          longitude: 108.22,
+        ),
+        filter: SearchFilter(
+          district: 'Sơn Trà',
+          purpose: 'Hẹn hò',
+          amenity: 'Ổ cắm',
+          space: 'Sân vườn',
+        ),
+      );
+
+      final state = subject.debugState;
+      expect(state.intent.query, 'pour over');
+      expect(state.filter.district, 'Sơn Trà');
+      expect(state.searchQuery, 'pour over');
+      expect(state.selectedDistrict, 'Sơn Trà');
+      expect(state.selectedPurpose, 'Hẹn hò');
+      expect(state.selectedAmenity, 'Ổ cắm');
+      expect(state.selectedSpace, 'Sân vườn');
+      expect(state.latitude, 16.07);
+      expect(state.longitude, 108.22);
+      expect(state.isLoading, isFalse);
       expect(state.shops, [_shop]);
       expect(state.error, isNull);
     });
@@ -164,7 +251,42 @@ void main() {
   });
 }
 
+class DelayedSearchRepository extends SearchRepository {
+  DelayedSearchRepository(super.client);
+
+  final Map<String, Completer<Result<List<CoffeeShop>>>> _completers = {};
+  List<CoffeeShop> _cachedShops = const [];
+
+  @override
+  List<CoffeeShop> get cachedShops => List.unmodifiable(_cachedShops);
+
+  @override
+  Future<Result<List<CoffeeShop>>> fetchShops({
+    required Map<String, dynamic> queryParameters,
+  }) async {
+    final query = queryParameters['search'] as String? ?? '';
+    final completer = Completer<Result<List<CoffeeShop>>>();
+    _completers[query] = completer;
+
+    final result = await completer.future;
+    if (result case Success<List<CoffeeShop>>(:final value)) {
+      _cachedShops = List.unmodifiable(value);
+    }
+    return result;
+  }
+
+  void completeQuery(String query, Result<List<CoffeeShop>> result) {
+    final completer = _completers[query];
+    if (completer == null) {
+      throw StateError('No pending search for "$query".');
+    }
+    completer.complete(result);
+  }
+}
+
 final _shop = CoffeeShop.fromJson(_shopJson);
+final _olderShop = CoffeeShop.fromJson({..._shopJson, 'id': 2, 'name': 'Old'});
+final _newerShop = CoffeeShop.fromJson({..._shopJson, 'id': 3, 'name': 'New'});
 
 const _shopJson = {
   'id': 1,
