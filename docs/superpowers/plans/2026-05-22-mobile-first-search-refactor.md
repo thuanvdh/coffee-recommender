@@ -903,15 +903,16 @@ class SearchState {
   final List<RankedShop> rankedShops;
   final AppFailure? failure;
 
-  const SearchState({
+  SearchState({
     required this.status,
-    this.intent = const SearchIntent(),
-    this.filter = const SearchFilter(),
+    SearchIntent? intent,
+    SearchFilter? filter,
     this.rankedShops = const [],
     this.failure,
-  });
+  })  : intent = intent ?? SearchIntent(),
+        filter = filter ?? SearchFilter();
 
-  const SearchState.initial() : this(status: SearchStateStatus.initial);
+  SearchState.initial() : this(status: SearchStateStatus.initial);
 }
 ```
 
