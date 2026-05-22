@@ -4,7 +4,7 @@ import 'package:coffee_recommender/core/result/result.dart';
 
 void main() {
   test('success maps value', () {
-    final result = Result<int>.success(2).map((value) => value * 3);
+    final result = const Result<int>.success(2).map((value) => value * 3);
 
     expect(result.isSuccess, true);
     expect(result.valueOrNull, 6);
@@ -12,7 +12,7 @@ void main() {
 
   test('failure keeps typed failure', () {
     const failure = AppFailure.timeout();
-    final result = Result<int>.failure(failure);
+    final result = const Result<int>.failure(failure);
 
     expect(result.isFailure, true);
     expect(result.failureOrNull, failure);
