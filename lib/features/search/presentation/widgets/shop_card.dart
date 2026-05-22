@@ -8,10 +8,12 @@ import 'package:coffee_recommender/features/search/presentation/providers/favori
 
 class ShopCard extends ConsumerWidget {
   final CoffeeShop shop;
+  final EdgeInsetsGeometry? margin;
 
   const ShopCard({
     super.key,
     required this.shop,
+    this.margin,
   });
 
   double get _averageRating {
@@ -34,7 +36,7 @@ class ShopCard extends ConsumerWidget {
         : 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20.0),
+      margin: margin ?? const EdgeInsets.only(bottom: 20.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16.0),

@@ -136,9 +136,11 @@ class SearchNotifier extends StateNotifier<SearchState> {
         final shopsList = data.map((json) => CoffeeShop.fromJson(json as Map<String, dynamic>)).toList();
         state = state.copyWith(shops: shopsList, isLoading: false);
       } else {
+        print('DEBUG: fetchShops returned status ${response.statusCode}');
         state = state.copyWith(isLoading: false, error: 'Failed to load shops');
       }
-    } catch (e) {
+    } catch (e, stack) {
+      print('DEBUG: fetchShops failed: $e\n$stack');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -156,8 +158,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
       if ((response.statusCode == 200 || response.statusCode == 201) && response.data != null) {
         return Review.fromJson(response.data as Map<String, dynamic>);
       }
-    } catch (e) {
-      // log or handle error
+    } catch (e, stack) {
+      print('DEBUG: submitReview failed: $e\n$stack');
     }
     return null;
   }
@@ -169,7 +171,8 @@ class SearchNotifier extends StateNotifier<SearchState> {
         data: data,
       );
       return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
+    } catch (e, stack) {
+      print('DEBUG: submitSuggestion failed: $e\n$stack');
       return false;
     }
   }
