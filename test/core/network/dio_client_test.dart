@@ -12,6 +12,7 @@ void main() {
 
   setUp(() {
     mockDio = MockDio();
+    when(() => mockDio.options).thenReturn(BaseOptions());
     dioClient = DioClient(mockDio);
   });
 

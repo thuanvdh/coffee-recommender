@@ -24,10 +24,14 @@ class SearchScreen extends ConsumerWidget {
 
     // List of active filters
     final activeFilters = <String>[];
-    if (state.selectedDistrict != null) activeFilters.add(state.selectedDistrict!);
-    if (state.selectedPurpose != null) activeFilters.add(state.selectedPurpose!);
-    if (state.selectedSpace != null) activeFilters.add(state.selectedSpace!);
-    if (state.selectedAmenity != null) activeFilters.add(state.selectedAmenity!);
+    final district = state.selectedDistrict;
+    if (district != null) activeFilters.add(district);
+    final purpose = state.selectedPurpose;
+    if (purpose != null) activeFilters.add(purpose);
+    final space = state.selectedSpace;
+    if (space != null) activeFilters.add(space);
+    final amenity = state.selectedAmenity;
+    if (amenity != null) activeFilters.add(amenity);
 
     return Scaffold(
       appBar: AppBar(
@@ -106,7 +110,7 @@ class SearchScreen extends ConsumerWidget {
               child: state.isLoading && state.shops.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : state.error != null && state.shops.isEmpty
-                      ? _buildErrorView(context, state.error!, notifier)
+                      ? _buildErrorView(context, state.error ?? 'Đã xảy ra lỗi', notifier)
                       : state.shops.isEmpty
                           ? _buildEmptyView(context)
                           : ListView.builder(

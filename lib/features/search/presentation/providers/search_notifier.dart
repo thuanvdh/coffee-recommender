@@ -10,6 +10,8 @@ class SearchState {
   final String? selectedPurpose;
   final String? selectedSpace;
   final String? selectedAmenity;
+  final double? latitude;
+  final double? longitude;
   final bool isLoading;
   final List<CoffeeShop> shops;
   final String? error;
@@ -20,6 +22,8 @@ class SearchState {
     this.selectedPurpose,
     this.selectedSpace,
     this.selectedAmenity,
+    this.latitude,
+    this.longitude,
     this.isLoading = false,
     this.shops = const [],
     this.error,
@@ -31,6 +35,8 @@ class SearchState {
     String? selectedPurpose,
     String? selectedSpace,
     String? selectedAmenity,
+    double? latitude,
+    double? longitude,
     bool? isLoading,
     List<CoffeeShop>? shops,
     String? error,
@@ -41,6 +47,8 @@ class SearchState {
       selectedPurpose: selectedPurpose ?? this.selectedPurpose,
       selectedSpace: selectedSpace ?? this.selectedSpace,
       selectedAmenity: selectedAmenity ?? this.selectedAmenity,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       isLoading: isLoading ?? this.isLoading,
       shops: shops ?? this.shops,
       error: error ?? this.error,
@@ -81,6 +89,11 @@ class SearchNotifier extends StateNotifier<SearchState> {
     fetchShops();
   }
 
+  void updateLocation(double? lat, double? lon) {
+    state = state.copyWith(latitude: lat, longitude: lon);
+    fetchShops();
+  }
+
   void clearFilters() {
     state = const SearchState();
     fetchShops();
@@ -106,6 +119,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
       if (state.selectedAmenity != null) {
         queryParameters['amenity'] = state.selectedAmenity;
       }
+      if (state.latitude != null && state.longitude != null) {
+        queryParameters['lat'] = state.latitude;
+        queryParameters['lon'] = state.longitude;
+      }
 
       final response = await _dioClient.dio.get(
         '/shops',
@@ -113,7 +130,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        final List<dynamic> data = response.data is List ? response.data : response.data['data'] ?? [];
+        final List<dynamic> data = response.data is List 
+            ? response.data 
+            : response.data['shops'] ?? response.data['data'] ?? [];
         final shopsList = data.map((json) => CoffeeShop.fromJson(json as Map<String, dynamic>)).toList();
         state = state.copyWith(shops: shopsList, isLoading: false);
       } else {
@@ -121,6 +140,37 @@ class SearchNotifier extends StateNotifier<SearchState> {
       }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<Review?> submitReview(int shopId, String userName, int rating, String comment) async {
+    try {
+      final response = await _dioClient.dio.post(
+        '/shops/$shopId/reviews',
+        data: {
+          'user_name': userName,
+          'rating': rating,
+          'comment': comment,
+        },
+      );
+      if ((response.statusCode == 200 || response.statusCode == 201) && response.data != null) {
+        return Review.fromJson(response.data as Map<String, dynamic>);
+      }
+    } catch (e) {
+      // log or handle error
+    }
+    return null;
+  }
+
+  Future<bool> submitSuggestion(Map<String, dynamic> data) async {
+    try {
+      final response = await _dioClient.dio.post(
+        '/suggestions',
+        data: data,
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      return false;
     }
   }
 }

@@ -31,7 +31,7 @@ class FilterBottomSheet extends ConsumerWidget {
         children: [
           // Header
           Row(
-            mainAxisAlignment: MainAxisAlignment.between,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Bộ lọc tìm kiếm',

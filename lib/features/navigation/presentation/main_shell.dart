@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -21,26 +22,24 @@ class MainShell extends StatelessWidget {
         onDestinationSelected: onTap,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+            icon: Icon(LucideIcons.house),
             label: 'Trang chủ',
           ),
           NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
+            icon: Icon(LucideIcons.search),
             label: 'Tìm kiếm',
           ),
           NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map),
-            label: 'Bản đồ',
+            icon: Icon(LucideIcons.circle_plus),
+            label: 'Đề xuất',
           ),
           NavigationDestination(
-            icon: Icon(Icons.menu),
-            label: 'Thêm',
+            icon: Icon(LucideIcons.info),
+            label: 'Giới thiệu',
           ),
         ],
       ),
     );
   }
 }
+

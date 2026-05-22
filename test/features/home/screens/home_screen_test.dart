@@ -3,20 +3,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:coffee_recommender/features/home/presentation/screens/home_screen.dart';
 import 'package:coffee_recommender/features/home/presentation/widgets/weather_widget.dart';
+import '../../../helpers/test_helpers.dart';
 
 void main() {
   testWidgets('HomeScreen renders header, weather, mood explorer and districts', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: getTestOverrides(),
+        child: const MaterialApp(
           home: HomeScreen(),
         ),
       ),
     );
 
     // Verify Title / Slogan
-    expect(find.text('Cà phê Đà Nẵng'), findsOneWidget);
-    expect(find.text('Tìm quán cà phê chuẩn gu của bạn'), findsOneWidget);
+    expect(find.text('Cafe là văn hóa'), findsOneWidget);
+    expect(find.text('Khám phá góc nhỏ\ntuyệt vời tại Đà Nẵng'), findsOneWidget);
 
     // Verify Weather Widget is present
     expect(find.byType(WeatherWidget), findsOneWidget);

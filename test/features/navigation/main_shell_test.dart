@@ -31,7 +31,7 @@ void main() {
     // Verify labels of the destinations
     expect(find.text('Trang chủ'), findsOneWidget);
     expect(find.text('Tìm kiếm'), findsOneWidget);
-    expect(find.text('Bản đồ'), findsOneWidget);
-    expect(find.text('Thêm'), findsOneWidget);
+    expect(find.text('Đề xuất'), findsOneWidget);
+    expect(find.text('Giới thiệu'), findsOneWidget);
   });
 }

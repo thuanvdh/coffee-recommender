@@ -51,6 +51,7 @@ build/
 *.njsproj
 *.sln
 *.sw?
+*.iml
 
 # Local environment variables
 .env

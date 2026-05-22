@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:coffee_recommender/core/theme/app_colors.dart';
 import 'package:coffee_recommender/core/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('AppTheme Tests', () {
-    test('Light theme properties are configured correctly', () {
+    testWidgets('Light theme properties are configured correctly', (WidgetTester tester) async {
       final theme = AppTheme.lightTheme;
       
       expect(theme.brightness, Brightness.light);
@@ -14,7 +16,7 @@ void main() {
       expect(theme.colorScheme.background, AppColors.lightBg);
     });
 
-    test('Dark theme properties are configured correctly', () {
+    testWidgets('Dark theme properties are configured correctly', (WidgetTester tester) async {
       final theme = AppTheme.darkTheme;
       
       expect(theme.brightness, Brightness.dark);

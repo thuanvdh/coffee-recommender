@@ -2,6 +2,8 @@ import 'package:coffee_recommender/features/home/presentation/screens/home_scree
 import 'package:coffee_recommender/features/navigation/presentation/main_shell.dart';
 import 'package:coffee_recommender/features/search/presentation/screens/search_screen.dart';
 import 'package:coffee_recommender/features/search/presentation/screens/shop_detail_screen.dart';
+import 'package:coffee_recommender/features/suggest/presentation/screens/suggest_screen.dart';
+import 'package:coffee_recommender/features/about/presentation/screens/about_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,15 +16,15 @@ final appRouter = GoRouter(
         int index = 0;
         if (location.startsWith('/search')) {
           index = 1;
-        } else if (location.startsWith('/map')) {
+        } else if (location.startsWith('/suggest')) {
           index = 2;
-        } else if (location.startsWith('/more')) {
+        } else if (location.startsWith('/about')) {
           index = 3;
         }
         return MainShell(
           currentIndex: index,
           onTap: (newIndex) {
-            final paths = ['/', '/search', '/map', '/more'];
+            final paths = ['/', '/search', '/suggest', '/about'];
             context.go(paths[newIndex]);
           },
           child: child,
@@ -38,16 +40,12 @@ final appRouter = GoRouter(
           builder: (context, state) => const SearchScreen(),
         ),
         GoRoute(
-          path: '/map',
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Map Screen')),
-          ),
+          path: '/suggest',
+          builder: (context, state) => const SuggestScreen(),
         ),
         GoRoute(
-          path: '/more',
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('More Screen')),
-          ),
+          path: '/about',
+          builder: (context, state) => const AboutScreen(),
         ),
       ],
     ),
@@ -60,3 +58,4 @@ final appRouter = GoRouter(
     ),
   ],
 );
+
