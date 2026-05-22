@@ -9,16 +9,20 @@ import 'package:coffee_recommender/features/search/presentation/providers/favori
 class ShopCard extends ConsumerWidget {
   final CoffeeShop shop;
   final EdgeInsetsGeometry? margin;
+  final List<String> matchReasons;
 
   const ShopCard({
     super.key,
     required this.shop,
     this.margin,
+    this.matchReasons = const [],
   });
 
   double get _averageRating {
     if (shop.reviews.isEmpty) return 4.5;
-    final total = shop.reviews.map((r) => r.rating).fold<int>(0, (sum, item) => sum + item);
+    final total = shop.reviews
+        .map((r) => r.rating)
+        .fold<int>(0, (sum, item) => sum + item);
     return total / shop.reviews.length;
   }
 
@@ -79,7 +83,8 @@ class ShopCard extends ConsumerWidget {
                         child: Icon(
                           LucideIcons.image_off,
                           size: 40.0,
-                          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                          color: theme.colorScheme.onSurfaceVariant
+                              .withOpacity(0.5),
                         ),
                       ),
                     ),
@@ -106,11 +111,14 @@ class ShopCard extends ConsumerWidget {
                       top: 12.0,
                       left: 12.0,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10.0, vertical: 5.0),
                         decoration: BoxDecoration(
-                          color: isOpen 
-                              ? const Color(0xFF10B981).withOpacity(0.9) // Emerald green
-                              : const Color(0xFFEF4444).withOpacity(0.9), // Coral red
+                          color: isOpen
+                              ? const Color(0xFF10B981)
+                                  .withOpacity(0.9) // Emerald green
+                              : const Color(0xFFEF4444)
+                                  .withOpacity(0.9), // Coral red
                           borderRadius: BorderRadius.circular(30.0),
                           boxShadow: [
                             BoxShadow(
@@ -137,14 +145,14 @@ class ShopCard extends ConsumerWidget {
                       right: 12.0,
                       child: GestureDetector(
                         onTap: () {
-                          ref.read(favoritesProvider.notifier).toggleFavorite(shop.slug);
+                          ref
+                              .read(favoritesProvider.notifier)
+                              .toggleFavorite(shop.slug);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                isFav 
-                                    ? 'Đã xóa khỏi danh sách yêu thích' 
-                                    : 'Đã thêm vào danh sách yêu thích'
-                              ),
+                              content: Text(isFav
+                                  ? 'Đã xóa khỏi danh sách yêu thích'
+                                  : 'Đã thêm vào danh sách yêu thích'),
                               duration: const Duration(seconds: 1),
                             ),
                           );
@@ -162,7 +170,8 @@ class ShopCard extends ConsumerWidget {
                           child: Icon(
                             isFav ? LucideIcons.heart : LucideIcons.heart,
                             size: 18.0,
-                            color: isFav ? const Color(0xFFEF4444) : Colors.white,
+                            color:
+                                isFav ? const Color(0xFFEF4444) : Colors.white,
                           ),
                         ),
                       ),
@@ -173,7 +182,8 @@ class ShopCard extends ConsumerWidget {
                         bottom: 12.0,
                         right: 12.0,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 5.0),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(30.0),
@@ -250,7 +260,8 @@ class ShopCard extends ConsumerWidget {
                             Text(
                               '(${shop.reviews.length})',
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.4),
                                 fontSize: 11.0,
                               ),
                             ),
@@ -273,7 +284,8 @@ class ShopCard extends ConsumerWidget {
                             child: Text(
                               shop.address ?? '',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.55),
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.55),
                                 fontSize: 12.0,
                               ),
                               maxLines: 1,
@@ -282,6 +294,20 @@ class ShopCard extends ConsumerWidget {
                           ),
                         ],
                       ),
+                    if (matchReasons.isNotEmpty) ...[
+                      const SizedBox(height: 10.0),
+                      Wrap(
+                        spacing: 6.0,
+                        runSpacing: 6.0,
+                        children: [
+                          for (final reason in matchReasons.take(2))
+                            _ShopTag(
+                              text: reason,
+                              color: theme.colorScheme.tertiary,
+                            ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 12.0),
                     // Tags (Purposes / Spaces) matching web chip tags
                     if (shop.purposes.isNotEmpty || shop.spaces.isNotEmpty)
@@ -289,8 +315,10 @@ class ShopCard extends ConsumerWidget {
                         spacing: 6.0,
                         runSpacing: 6.0,
                         children: [
-                          ...shop.purposes.take(2).map((p) => _ShopTag(text: p, color: theme.colorScheme.primary)),
-                          ...shop.spaces.take(1).map((s) => _ShopTag(text: s, color: theme.colorScheme.secondary)),
+                          ...shop.purposes.take(2).map((p) => _ShopTag(
+                              text: p, color: theme.colorScheme.primary)),
+                          ...shop.spaces.take(1).map((s) => _ShopTag(
+                              text: s, color: theme.colorScheme.secondary)),
                         ],
                       ),
                   ],
@@ -338,4 +366,3 @@ class _ShopTag extends StatelessWidget {
     );
   }
 }
-

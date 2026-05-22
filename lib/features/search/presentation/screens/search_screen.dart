@@ -207,22 +207,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => notifier.fetchShops(),
-              child: state.isLoading && state.shops.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : state.error != null && state.shops.isEmpty
-                      ? _buildErrorView(
-                          context, state.error ?? 'Đã xảy ra lỗi', notifier)
-                      : state.shops.isEmpty
-                          ? _buildEmptyView(context)
-                          : ListView.builder(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16.0),
-                              itemCount: state.shops.length,
-                              itemBuilder: (context, index) {
-                                final shop = state.shops[index];
-                                return ShopCard(shop: shop);
-                              },
-                            ),
+              child: _buildResults(context, state, notifier),
             ),
           ),
         ],
@@ -230,7 +215,126 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildEmptyView(BuildContext context) {
+  Widget _buildResults(
+    BuildContext context,
+    SearchState state,
+    SearchNotifier notifier,
+  ) {
+    final rankedShops = state.rankedShops;
+    final hasRankedShops = rankedShops.isNotEmpty;
+
+    return switch (state.status) {
+      SearchStateStatus.loading when !hasRankedShops =>
+        _buildLoadingView(context),
+      SearchStateStatus.empty => _buildEmptyView(context, notifier),
+      SearchStateStatus.failure when !hasRankedShops => _buildErrorView(
+          context,
+          state.failure?.userMessage ?? state.error ?? 'Đã xảy ra lỗi',
+          notifier,
+        ),
+      SearchStateStatus.stale => _buildRankedList(
+          context,
+          state,
+          showStaleIndicator: true,
+        ),
+      SearchStateStatus.success => _buildRankedList(context, state),
+      SearchStateStatus.loading => _buildRankedList(
+          context,
+          state,
+          showLoadingIndicator: true,
+        ),
+      SearchStateStatus.failure => _buildRankedList(
+          context,
+          state,
+          showStaleIndicator: true,
+        ),
+      SearchStateStatus.initial when hasRankedShops => _buildRankedList(
+          context,
+          state,
+        ),
+      SearchStateStatus.initial => _buildEmptyView(context, notifier),
+    };
+  }
+
+  Widget _buildLoadingView(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+        const Center(child: CircularProgressIndicator()),
+      ],
+    );
+  }
+
+  Widget _buildRankedList(
+    BuildContext context,
+    SearchState state, {
+    bool showStaleIndicator = false,
+    bool showLoadingIndicator = false,
+  }) {
+    final rankedShops = state.rankedShops;
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      itemCount: rankedShops.length +
+          (showStaleIndicator || showLoadingIndicator ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (showStaleIndicator && index == 0) {
+          return _buildStaleIndicator(context, state);
+        }
+        if (showLoadingIndicator && index == 0) {
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 12.0),
+            child: LinearProgressIndicator(minHeight: 2.0),
+          );
+        }
+
+        final rankedShop = rankedShops[
+            index - (showStaleIndicator || showLoadingIndicator ? 1 : 0)];
+        return ShopCard(
+          shop: rankedShop.shop,
+          matchReasons: rankedShop.matchReasons,
+        );
+      },
+    );
+  }
+
+  Widget _buildStaleIndicator(BuildContext context, SearchState state) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(
+          color: theme.colorScheme.error.withOpacity(0.16),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 18.0,
+            color: theme.colorScheme.error,
+          ),
+          const SizedBox(width: 8.0),
+          Expanded(
+            child: Text(
+              state.failure?.userMessage ??
+                  state.error ??
+                  'Đang hiển thị kết quả đã lưu gần nhất.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyView(BuildContext context, SearchNotifier notifier) {
     final theme = Theme.of(context);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -252,6 +356,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: Text(
             'Hãy thử thay đổi từ khóa hoặc bộ lọc khác nhé.',
             style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+          ),
+        ),
+        const SizedBox(height: 16.0),
+        Center(
+          child: TextButton(
+            onPressed: notifier.clearFilters,
+            child: const Text('Xóa bộ lọc'),
           ),
         ),
       ],

@@ -1,4 +1,6 @@
 import 'package:coffee_recommender/core/network/dio_client.dart';
+import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
+import 'package:coffee_recommender/features/search/domain/models/ranked_shop.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_filter.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:flutter/material.dart';
@@ -10,14 +12,22 @@ import 'package:dio/dio.dart';
 import '../../../helpers/test_helpers.dart';
 
 class RecordingSearchNotifier extends SearchNotifier {
-  RecordingSearchNotifier() : super(DioClient(Dio())) {
-    state = SearchState(shops: const [], isLoading: false);
+  RecordingSearchNotifier({SearchState? initialState})
+      : super(DioClient(Dio())) {
+    state = initialState ?? SearchState(shops: const [], isLoading: false);
   }
 
   final searchedIntents = <SearchIntent>[];
+  var didClearFilters = false;
 
   @override
   Future<void> fetchShops() async {}
+
+  @override
+  void clearFilters() {
+    didClearFilters = true;
+    state = SearchState.initial();
+  }
 
   void emitProviderRebuild({required String query}) {
     state = state.copyWith(
@@ -30,8 +40,10 @@ class RecordingSearchNotifier extends SearchNotifier {
   Future<void> search(SearchIntent intent, {SearchFilter? filter}) async {
     searchedIntents.add(intent);
     state = state.copyWith(
+      status: SearchStateStatus.empty,
       intent: intent,
       searchQuery: intent.query,
+      rankedShops: const [],
       shops: const [],
       isLoading: false,
     );
@@ -144,4 +156,114 @@ void main() {
     final editableText = tester.widget<EditableText>(find.byType(EditableText));
     expect(editableText.controller.text, 'latte draft');
   });
+
+  testWidgets('SearchScreen shows typed empty state with clear action',
+      (WidgetTester tester) async {
+    final notifier = RecordingSearchNotifier(
+      initialState: SearchState(
+        status: SearchStateStatus.empty,
+        rankedShops: const [],
+        shops: const [],
+        isLoading: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchNotifierProvider.overrideWith((ref) => notifier),
+        ],
+        child: const MaterialApp(
+          home: SearchScreen(),
+        ),
+      ),
+    );
+
+    expect(find.text('Không tìm thấy quán nào'), findsOneWidget);
+
+    await tester.tap(find.text('Xóa bộ lọc'));
+    await tester.pump();
+
+    expect(notifier.didClearFilters, isTrue);
+  });
+
+  testWidgets('SearchScreen renders match reasons on ranked shop cards',
+      (WidgetTester tester) async {
+    final notifier = RecordingSearchNotifier(
+      initialState: SearchState(
+        status: SearchStateStatus.success,
+        rankedShops: [
+          RankedShop(
+            shop: _shop,
+            score: 20,
+            matchReasons: ['Có máy lạnh', 'WiFi mạnh', 'Gửi xe'],
+          ),
+        ],
+        shops: [_shop],
+        isLoading: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchNotifierProvider.overrideWith((ref) => notifier),
+        ],
+        child: const MaterialApp(
+          home: SearchScreen(),
+        ),
+      ),
+    );
+
+    expect(find.text('Goc Yen Binh'), findsOneWidget);
+    expect(find.text('Có máy lạnh'), findsOneWidget);
+    expect(find.text('WiFi mạnh'), findsOneWidget);
+    expect(find.text('Gửi xe'), findsNothing);
+  });
+
+  testWidgets('SearchScreen shows stale indicator with ranked shops',
+      (WidgetTester tester) async {
+    final notifier = RecordingSearchNotifier(
+      initialState: SearchState(
+        status: SearchStateStatus.stale,
+        rankedShops: [
+          RankedShop(
+            shop: _shop,
+            score: 10,
+            matchReasons: ['Có máy lạnh'],
+          ),
+        ],
+        shops: [_shop],
+        error: 'Không thể tải kết quả mới',
+        isLoading: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchNotifierProvider.overrideWith((ref) => notifier),
+        ],
+        child: const MaterialApp(
+          home: SearchScreen(),
+        ),
+      ),
+    );
+
+    expect(find.text('Không thể tải kết quả mới'), findsOneWidget);
+    expect(find.text('Goc Yen Binh'), findsOneWidget);
+  });
 }
+
+final _shop = CoffeeShop.fromJson(const {
+  'id': 1,
+  'name': 'Goc Yen Binh',
+  'slug': 'goc-yen-binh',
+  'address': '12 Nguyen Van Linh',
+  'status': 'open',
+  'purposes': ['Làm việc'],
+  'amenities': ['Máy lạnh'],
+  'spaces': ['Yên tĩnh'],
+  'created_at': '2026-05-22T00:00:00Z',
+  'updated_at': '2026-05-22T00:00:00Z',
+});

@@ -11,10 +11,17 @@ class FilterBottomSheet extends ConsumerWidget {
     final notifier = ref.read(searchNotifierProvider.notifier);
     final theme = Theme.of(context);
 
-    final districts = ['Hải Châu', 'Thanh Khê', 'Sơn Trà', 'Ngũ Hành Sơn', 'Liên Chiểu', 'Cẩm Lệ'];
-    final purposes = ['Ngồi làm việc', 'Không gian riêng tư', 'Tụ tập bạn bè', 'Đọc sách'];
-    final spaces = ['Trong nhà', 'Ngoài trời', 'View hoàng hôn', 'View sông biển'];
-    final amenities = ['WiFi mạnh', 'Bàn cao', 'Máy lạnh', 'Nhiều ổ cắm'];
+    final purposes = ['Làm việc', 'Hẹn hò', 'Check-in', 'Họp nhóm'];
+    final practicalConditions = ['Máy lạnh', 'WiFi mạnh', 'Gửi xe'];
+    final spaces = ['Yên tĩnh', 'Sân thượng', 'Vintage', 'Ngoài trời'];
+    final districts = [
+      'Hải Châu',
+      'Sơn Trà',
+      'Ngũ Hành Sơn',
+      'Thanh Khê',
+      'Liên Chiểu',
+      'Cẩm Lệ',
+    ];
 
     return Container(
       padding: const EdgeInsets.all(20.0),
@@ -51,43 +58,39 @@ class FilterBottomSheet extends ConsumerWidget {
           const Divider(),
           const SizedBox(height: 12.0),
 
-          // District Filters
           _buildFilterSection(
             context,
-            title: 'Khu vực',
-            items: districts,
-            selectedItem: state.selectedDistrict,
-            onSelected: (val) => notifier.updateDistrict(val),
-          ),
-          const SizedBox(height: 16.0),
-
-          // Purpose Filters
-          _buildFilterSection(
-            context,
-            title: 'Mục đích & Phong cách',
+            title: 'Mục đích',
             items: purposes,
             selectedItem: state.selectedPurpose,
             onSelected: (val) => notifier.updatePurpose(val),
           ),
           const SizedBox(height: 16.0),
 
-          // Space Filters
           _buildFilterSection(
             context,
-            title: 'Không gian',
+            title: 'Điều kiện thực tế',
+            items: practicalConditions,
+            selectedItem: state.selectedAmenity,
+            onSelected: (val) => notifier.updateAmenity(val),
+          ),
+          const SizedBox(height: 16.0),
+
+          _buildFilterSection(
+            context,
+            title: 'Không gian & đồ uống',
             items: spaces,
             selectedItem: state.selectedSpace,
             onSelected: (val) => notifier.updateSpace(val),
           ),
           const SizedBox(height: 16.0),
 
-          // Amenity Filters
           _buildFilterSection(
             context,
-            title: 'Tiện ích',
-            items: amenities,
-            selectedItem: state.selectedAmenity,
-            onSelected: (val) => notifier.updateAmenity(val),
+            title: 'Quận',
+            items: districts,
+            selectedItem: state.selectedDistrict,
+            onSelected: (val) => notifier.updateDistrict(val),
           ),
           const SizedBox(height: 24.0),
 
