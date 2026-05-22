@@ -16,5 +16,6 @@ void main() {
     expect(client.dio.options.baseUrl, 'https://api.example.com/api/');
     expect(client.dio.options.connectTimeout, const Duration(seconds: 10));
     expect(client.dio.options.receiveTimeout, const Duration(seconds: 10));
+    expect(client.dio.options.headers['Accept'], 'application/json');
   });
 }
