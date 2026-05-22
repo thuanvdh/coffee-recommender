@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 
 class FakeSearchNotifier extends SearchNotifier {
   FakeSearchNotifier() : super(DioClient(Dio())) {
-    state = const SearchState(
+    state = SearchState(
       shops: [],
       isLoading: false,
     );
