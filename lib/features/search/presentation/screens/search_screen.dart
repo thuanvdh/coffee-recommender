@@ -130,6 +130,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (space != null) activeFilters.add(space);
     final amenity = state.selectedAmenity;
     if (amenity != null) activeFilters.add(amenity);
+    if (state.openNow) activeFilters.add('Đang mở');
 
     return Scaffold(
       appBar: AppBar(
@@ -195,6 +196,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           notifier.updateSpace(null);
                         } else if (filter == state.selectedAmenity) {
                           notifier.updateAmenity(null);
+                        } else if (filter == 'Đang mở') {
+                          notifier.updateOpenNow(false);
                         }
                       },
                     ),
@@ -275,6 +278,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final rankedShops = state.rankedShops;
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       itemCount: rankedShops.length +
           (showStaleIndicator || showLoadingIndicator ? 1 : 0),

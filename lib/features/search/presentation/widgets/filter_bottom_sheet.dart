@@ -32,81 +32,85 @@ class FilterBottomSheet extends ConsumerWidget {
           topRight: Radius.circular(20.0),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Bộ lọc tìm kiếm',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Bộ lọc tìm kiếm',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    notifier.clearFilters();
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Xóa tất cả'),
+                ),
+              ],
+            ),
+            const Divider(),
+            const SizedBox(height: 12.0),
+
+            _buildFilterSection(
+              context,
+              title: 'Mục đích',
+              items: purposes,
+              selectedItem: state.selectedPurpose,
+              onSelected: (val) => notifier.updatePurpose(val),
+            ),
+            const SizedBox(height: 16.0),
+
+            _buildFilterSection(
+              context,
+              title: 'Điều kiện thực tế',
+              items: practicalConditions,
+              selectedItem: state.selectedAmenity,
+              openNow: state.openNow,
+              onSelected: (val) => notifier.updateAmenity(val),
+              onOpenNowSelected: (val) => notifier.updateOpenNow(val),
+            ),
+            const SizedBox(height: 16.0),
+
+            _buildFilterSection(
+              context,
+              title: 'Không gian & đồ uống',
+              items: spaces,
+              selectedItem: state.selectedSpace,
+              onSelected: (val) => notifier.updateSpace(val),
+            ),
+            const SizedBox(height: 16.0),
+
+            _buildFilterSection(
+              context,
+              title: 'Quận',
+              items: districts,
+              selectedItem: state.selectedDistrict,
+              onSelected: (val) => notifier.updateDistrict(val),
+            ),
+            const SizedBox(height: 24.0),
+
+            // Apply Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text('Áp dụng bộ lọc'),
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  notifier.clearFilters();
-                  Navigator.pop(context);
-                },
-                child: const Text('Xóa tất cả'),
-              ),
-            ],
-          ),
-          const Divider(),
-          const SizedBox(height: 12.0),
-
-          _buildFilterSection(
-            context,
-            title: 'Mục đích',
-            items: purposes,
-            selectedItem: state.selectedPurpose,
-            onSelected: (val) => notifier.updatePurpose(val),
-          ),
-          const SizedBox(height: 16.0),
-
-          _buildFilterSection(
-            context,
-            title: 'Điều kiện thực tế',
-            items: practicalConditions,
-            selectedItem: state.selectedAmenity,
-            onSelected: (val) => notifier.updateAmenity(val),
-          ),
-          const SizedBox(height: 16.0),
-
-          _buildFilterSection(
-            context,
-            title: 'Không gian & đồ uống',
-            items: spaces,
-            selectedItem: state.selectedSpace,
-            onSelected: (val) => notifier.updateSpace(val),
-          ),
-          const SizedBox(height: 16.0),
-
-          _buildFilterSection(
-            context,
-            title: 'Quận',
-            items: districts,
-            selectedItem: state.selectedDistrict,
-            onSelected: (val) => notifier.updateDistrict(val),
-          ),
-          const SizedBox(height: 24.0),
-
-          // Apply Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.0),
-                child: Text('Áp dụng bộ lọc'),
-              ),
             ),
-          ),
-          const SizedBox(height: 16.0),
-        ],
+            const SizedBox(height: 16.0),
+          ],
+        ),
       ),
     );
   }
@@ -116,7 +120,9 @@ class FilterBottomSheet extends ConsumerWidget {
     required String title,
     required List<String> items,
     required String? selectedItem,
+    bool openNow = false,
     required ValueChanged<String?> onSelected,
+    ValueChanged<bool>? onOpenNowSelected,
   }) {
     final theme = Theme.of(context);
     return Column(
@@ -141,7 +147,14 @@ class FilterBottomSheet extends ConsumerWidget {
                 onSelected(selected ? item : null);
               },
             );
-          }).toList(),
+          }).followedBy([
+            if (onOpenNowSelected != null)
+              ChoiceChip(
+                label: const Text('Đang mở'),
+                selected: openNow,
+                onSelected: onOpenNowSelected,
+              ),
+          ]).toList(),
         ),
       ],
     );

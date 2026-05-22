@@ -58,6 +58,11 @@ class SearchNotifier extends StateNotifier<SearchState> {
     fetchShops();
   }
 
+  void updateOpenNow(bool openNow) {
+    state = state.copyWith(openNow: openNow);
+    fetchShops();
+  }
+
   void updateLocation(double? lat, double? lon) {
     state = state.copyWith(latitude: lat, longitude: lon);
     fetchShops();
@@ -191,6 +196,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
       selectedPurpose: filter.purpose ?? _firstTag(intent.purposeTags),
       selectedSpace: filter.space ?? _firstTag(intent.spaceTags),
       selectedAmenity: filter.amenity ?? _firstTag(intent.amenityTags),
+      openNow: filter.openNow ?? intent.openNow,
       latitude: intent.latitude,
       longitude: intent.longitude,
     );
@@ -205,6 +211,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
       amenityTags: _nullableTag(state.selectedAmenity),
       spaceTags: _nullableTag(state.selectedSpace),
       nearMe: hasLocation,
+      openNow: state.openNow,
       latitude: state.latitude,
       longitude: state.longitude,
     );
@@ -216,6 +223,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
       purpose: state.selectedPurpose,
       amenity: state.selectedAmenity,
       space: state.selectedSpace,
+      openNow: state.openNow ? true : null,
     );
   }
 

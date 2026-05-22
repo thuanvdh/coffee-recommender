@@ -221,6 +221,69 @@ void main() {
     expect(find.text('Gửi xe'), findsNothing);
   });
 
+  testWidgets('SearchScreen ranked list is always scrollable for refresh',
+      (WidgetTester tester) async {
+    final notifier = RecordingSearchNotifier(
+      initialState: SearchState(
+        status: SearchStateStatus.success,
+        rankedShops: [
+          RankedShop(
+            shop: _shop,
+            score: 20,
+            matchReasons: ['Có máy lạnh'],
+          ),
+        ],
+        shops: [_shop],
+        isLoading: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchNotifierProvider.overrideWith((ref) => notifier),
+        ],
+        child: const MaterialApp(
+          home: SearchScreen(),
+        ),
+      ),
+    );
+
+    final listViews = tester.widgetList<ListView>(find.byType(ListView));
+    expect(
+      listViews.any(
+        (listView) => listView.physics is AlwaysScrollableScrollPhysics,
+      ),
+      isTrue,
+    );
+  });
+
+  testWidgets('SearchScreen filter sheet toggles open-now filter',
+      (WidgetTester tester) async {
+    final notifier = RecordingSearchNotifier();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchNotifierProvider.overrideWith((ref) => notifier),
+        ],
+        child: const MaterialApp(
+          home: SearchScreen(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.filter_list));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Đang mở'), findsOneWidget);
+
+    await tester.tap(find.text('Đang mở'));
+    await tester.pump();
+
+    expect(notifier.debugState.openNow, isTrue);
+  });
+
   testWidgets('SearchScreen shows stale indicator with ranked shops',
       (WidgetTester tester) async {
     final notifier = RecordingSearchNotifier(

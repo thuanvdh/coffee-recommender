@@ -50,6 +50,7 @@ void main() {
       expect(state.intent, SearchIntent());
       expect(state.searchQuery, '');
       expect(state.selectedDistrict, isNull);
+      expect(state.openNow, isFalse);
       expect(state.isLoading, false);
       expect(state.shops, isEmpty);
       expect(state.rankedShops, isEmpty);
@@ -190,6 +191,7 @@ void main() {
             'amenity': 'Ổ cắm',
             'space': 'Sân vườn',
             'district': 'Sơn Trà',
+            'open_now': true,
             'lat': 16.07,
             'lon': 108.22,
           },
@@ -214,6 +216,7 @@ void main() {
           purpose: 'Hẹn hò',
           amenity: 'Ổ cắm',
           space: 'Sân vườn',
+          openNow: true,
         ),
       );
 
@@ -225,6 +228,7 @@ void main() {
       expect(state.selectedPurpose, 'Hẹn hò');
       expect(state.selectedAmenity, 'Ổ cắm');
       expect(state.selectedSpace, 'Sân vườn');
+      expect(state.openNow, isTrue);
       expect(state.latitude, 16.07);
       expect(state.longitude, 108.22);
       expect(state.isLoading, isFalse);
@@ -239,6 +243,7 @@ void main() {
             'search': 'yen',
             'purpose': 'Làm việc',
             'district': 'Hải Châu',
+            'open_now': true,
           },
           cacheResult: false,
         ),
@@ -249,6 +254,7 @@ void main() {
         searchQuery: 'yen',
         selectedPurpose: 'Làm việc',
         selectedDistrict: 'Hải Châu',
+        openNow: true,
       );
 
       await subject.fetchShops();
@@ -256,8 +262,27 @@ void main() {
       expect(subject.debugState.status, SearchStateStatus.success);
       expect(subject.debugState.intent.query, 'yen');
       expect(subject.debugState.intent.purposeTags, ['Làm việc']);
+      expect(subject.debugState.intent.openNow, isTrue);
       expect(subject.debugState.filter.district, 'Hải Châu');
+      expect(subject.debugState.filter.openNow, isTrue);
       expect(subject.debugState.shops, [_shop]);
+    });
+
+    test('updateOpenNow changes open-now state and triggers fetch', () {
+      when(
+        () => repository.fetchShops(
+          queryParameters: {'open_now': true},
+          cacheResult: false,
+        ),
+      ).thenAnswer((_) async => const Result.success([]));
+
+      final subject = notifier();
+      subject.updateOpenNow(true);
+
+      expect(subject.debugState.openNow, isTrue);
+      expect(subject.debugState.intent.openNow, isTrue);
+      expect(subject.debugState.filter.openNow, isTrue);
+      expect(subject.debugState.status, SearchStateStatus.loading);
     });
 
     test('uses cached shops as stale state on failure', () async {

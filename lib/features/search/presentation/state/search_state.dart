@@ -27,6 +27,7 @@ class SearchState {
     this.selectedPurpose,
     this.selectedSpace,
     this.selectedAmenity,
+    this.openNow = false,
     this.latitude,
     this.longitude,
     this.isLoading = false,
@@ -50,6 +51,7 @@ class SearchState {
   final String? selectedPurpose;
   final String? selectedSpace;
   final String? selectedAmenity;
+  final bool openNow;
   final double? latitude;
   final double? longitude;
   final bool isLoading;
@@ -67,6 +69,7 @@ class SearchState {
     Object? selectedPurpose = _unset,
     Object? selectedSpace = _unset,
     Object? selectedAmenity = _unset,
+    bool? openNow,
     Object? latitude = _unset,
     Object? longitude = _unset,
     bool? isLoading,
@@ -92,6 +95,7 @@ class SearchState {
       selectedAmenity: selectedAmenity == _unset
           ? this.selectedAmenity
           : selectedAmenity as String?,
+      openNow: openNow ?? this.openNow,
       latitude: latitude == _unset ? this.latitude : latitude as double?,
       longitude: longitude == _unset ? this.longitude : longitude as double?,
       isLoading: isLoading ?? this.isLoading,
