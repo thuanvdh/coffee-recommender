@@ -43,7 +43,7 @@ void main() {
         queryParameters: {'search': 'yen'},
       );
 
-      expect(result, isA<Success<List<dynamic>>>());
+      expect(result, isA<Success<List<CoffeeShop>>>());
       expect(result.valueOrNull, hasLength(1));
       expect(result.valueOrNull!.single.name, 'Goc Yen Binh');
       expect(repository.cachedShops, result.valueOrNull);
@@ -132,7 +132,7 @@ void main() {
         queryParameters: {'search': 'offline'},
       );
 
-      expect(result, isA<Failure<List<dynamic>>>());
+      expect(result, isA<Failure<List<CoffeeShop>>>());
       expect(result.failureOrNull!.type, AppFailureType.network);
       expect(repository.cachedShops.single.slug, 'goc-yen-binh');
     });
