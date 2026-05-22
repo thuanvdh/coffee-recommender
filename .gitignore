@@ -1,0 +1,63 @@
+# https://dart.dev/guides/libraries/private-files
+
+# Created by https://www.toptal.com/developers/gitignore/api/flutter,dart
+# Edit at https://www.toptal.com/developers/gitignore?templates=flutter,dart
+
+### Dart ###
+# Don't commit compile-time plugins/libraries metadata
+.dart_tool/
+
+# Executables
+*.exe
+*.bat
+*.app
+*.apk
+*.ipa
+
+# Don't commit tool-generated file-mappings
+.packages
+
+# Web-related
+.web/
+
+### Flutter ###
+# Generated build files
+build/
+
+# Symbol files
+*.symbols
+
+# Tool-generated files
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# Cryptography / keys
+*.keystore
+*.jks
+*.p12
+*.pem
+*.pfx
+*.pkcs12
+
+# macOS system files
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local environment variables
+.env
+.env.local
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
