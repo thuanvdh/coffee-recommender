@@ -1,22 +1,20 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:coffee_recommender/core/config/app_config.dart';
 import 'package:coffee_recommender/core/network/dio_client.dart';
-import 'package:coffee_recommender/core/network/api_exception.dart';
-
-class MockDio extends Mock implements Dio {}
 
 void main() {
-  late MockDio mockDio;
-  late DioClient dioClient;
+  test('DioClient applies config base URL and timeouts', () {
+    final dio = Dio();
+    final client = DioClient(
+      dio,
+      config: const AppConfig(
+          apiBaseUrl: 'https://api.example.com/api', environment: 'test'),
+    );
 
-  setUp(() {
-    mockDio = MockDio();
-    when(() => mockDio.options).thenReturn(BaseOptions());
-    dioClient = DioClient(mockDio);
-  });
-
-  test('DioClient base URL is configured properly', () {
-    expect(dioClient.baseUrl, contains('/api'));
+    expect(client.baseUrl, 'https://api.example.com/api/');
+    expect(client.dio.options.baseUrl, 'https://api.example.com/api/');
+    expect(client.dio.options.connectTimeout, const Duration(seconds: 10));
+    expect(client.dio.options.receiveTimeout, const Duration(seconds: 10));
   });
 }
