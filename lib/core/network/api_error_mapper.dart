@@ -12,8 +12,6 @@ class ApiErrorMapper {
         DioExceptionType.connectionError => const AppFailure.network(),
         DioExceptionType.badResponse =>
           _fromStatusCode(error.response?.statusCode),
-        DioExceptionType.unknown when error.response?.statusCode != null =>
-          _fromStatusCode(error.response?.statusCode),
         DioExceptionType.cancel ||
         DioExceptionType.badCertificate ||
         DioExceptionType.unknown =>

@@ -21,6 +21,7 @@ void main() {
     final error = DioException(
       requestOptions: requestOptions(),
       response: Response(statusCode: 401, requestOptions: requestOptions()),
+      type: DioExceptionType.badResponse,
     );
 
     final failure = ApiErrorMapper.map(error);
@@ -32,6 +33,7 @@ void main() {
     final error = DioException(
       requestOptions: requestOptions(),
       response: Response(statusCode: 500, requestOptions: requestOptions()),
+      type: DioExceptionType.badResponse,
     );
 
     final failure = ApiErrorMapper.map(error);
@@ -45,6 +47,30 @@ void main() {
       requestOptions: requestOptions(),
       response: Response(statusCode: 500, requestOptions: requestOptions()),
       type: DioExceptionType.cancel,
+    );
+
+    final failure = ApiErrorMapper.map(error);
+
+    expect(failure.type, AppFailureType.unknown);
+  });
+
+  test('maps unknown with response to unknown failure', () {
+    final error = DioException(
+      requestOptions: requestOptions(),
+      response: Response(statusCode: 500, requestOptions: requestOptions()),
+      type: DioExceptionType.unknown,
+    );
+
+    final failure = ApiErrorMapper.map(error);
+
+    expect(failure.type, AppFailureType.unknown);
+  });
+
+  test('maps bad certificate with response to unknown failure', () {
+    final error = DioException(
+      requestOptions: requestOptions(),
+      response: Response(statusCode: 500, requestOptions: requestOptions()),
+      type: DioExceptionType.badCertificate,
     );
 
     final failure = ApiErrorMapper.map(error);
