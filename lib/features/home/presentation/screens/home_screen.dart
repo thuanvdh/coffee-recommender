@@ -36,6 +36,31 @@ final weatherProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return {'temp': 28.5, 'code': 1};
 });
 
+final locationClientProvider = Provider<LocationClient>((ref) {
+  return LocationClient();
+});
+
+class LocationClient {
+  Future<bool> isLocationServiceEnabled() {
+    return Geolocator.isLocationServiceEnabled();
+  }
+
+  Future<LocationPermission> checkPermission() {
+    return Geolocator.checkPermission();
+  }
+
+  Future<LocationPermission> requestPermission() {
+    return Geolocator.requestPermission();
+  }
+
+  Future<Position> getCurrentPosition() {
+    return Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+      timeLimit: const Duration(seconds: 5),
+    );
+  }
+}
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -65,10 +90,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _handleNearMe() async {
+    final locationClient = ref.read(locationClientProvider);
     bool serviceEnabled;
     LocationPermission permission;
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    serviceEnabled = await locationClient.isLocationServiceEnabled();
     if (!mounted) return;
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,10 +102,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
 
-    permission = await Geolocator.checkPermission();
+    permission = await locationClient.checkPermission();
     if (!mounted) return;
     if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+      permission = await locationClient.requestPermission();
       if (!mounted) return;
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -95,10 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 5),
-      );
+      final position = await locationClient.getCurrentPosition();
       if (!mounted) return;
       context.go(
         '/search',

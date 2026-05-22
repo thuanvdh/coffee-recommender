@@ -2,13 +2,12 @@ import 'package:coffee_recommender/features/search/domain/models/search_intent.d
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
 import 'package:go_router/go_router.dart';
 import 'package:coffee_recommender/features/home/presentation/screens/home_screen.dart';
 import 'package:coffee_recommender/features/home/presentation/widgets/weather_widget.dart';
 import '../../../helpers/test_helpers.dart';
 
-class LocationServicesOffGeolocator extends GeolocatorPlatform {
+class LocationServicesOffClient extends LocationClient {
   @override
   Future<bool> isLocationServiceEnabled() async => false;
 }
@@ -16,6 +15,7 @@ class LocationServicesOffGeolocator extends GeolocatorPlatform {
 Future<void> pumpHomeRouter(
   WidgetTester tester, {
   required void Function(SearchIntent intent) onSearch,
+  List<Override>? overrides,
 }) async {
   final router = GoRouter(
     routes: [
@@ -38,7 +38,7 @@ Future<void> pumpHomeRouter(
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: getTestOverrides(),
+      overrides: overrides ?? getTestOverrides(),
       child: MaterialApp.router(routerConfig: router),
     ),
   );
@@ -98,17 +98,15 @@ void main() {
 
   testWidgets('Gần tôi chip uses GPS flow instead of immediate search route',
       (WidgetTester tester) async {
-    final originalGeolocator = GeolocatorPlatform.instance;
-    GeolocatorPlatform.instance = LocationServicesOffGeolocator();
     SearchIntent? submittedIntent;
-
-    addTearDown(() {
-      GeolocatorPlatform.instance = originalGeolocator;
-    });
 
     await pumpHomeRouter(
       tester,
       onSearch: (intent) => submittedIntent = intent,
+      overrides: [
+        ...getTestOverrides(),
+        locationClientProvider.overrideWithValue(LocationServicesOffClient()),
+      ],
     );
 
     expect(find.text('Gần tôi'), findsOneWidget);

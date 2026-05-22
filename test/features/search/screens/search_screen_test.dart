@@ -19,6 +19,13 @@ class RecordingSearchNotifier extends SearchNotifier {
   @override
   Future<void> fetchShops() async {}
 
+  void emitProviderRebuild({required String query}) {
+    state = state.copyWith(
+      searchQuery: query,
+      isLoading: !state.isLoading,
+    );
+  }
+
   @override
   Future<void> search(SearchIntent intent, {SearchFilter? filter}) async {
     searchedIntents.add(intent);
@@ -107,5 +114,34 @@ void main() {
     expect(notifier.searchedIntents, hasLength(2));
     expect(notifier.searchedIntents.last.query, 'second');
     expect(find.text('second'), findsOneWidget);
+  });
+
+  testWidgets('SearchScreen preserves focused edits during provider rebuild',
+      (WidgetTester tester) async {
+    final notifier = RecordingSearchNotifier();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchNotifierProvider.overrideWith((ref) => notifier),
+        ],
+        child: MaterialApp(
+          home: SearchScreen(
+            initialIntent: SearchIntent(query: 'espresso'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byType(SearchBar));
+    await tester.enterText(find.byType(EditableText), 'latte draft');
+    await tester.pump();
+
+    notifier.emitProviderRebuild(query: 'espresso');
+    await tester.pump();
+
+    final editableText = tester.widget<EditableText>(find.byType(EditableText));
+    expect(editableText.controller.text, 'latte draft');
   });
 }

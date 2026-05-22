@@ -19,13 +19,26 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   late final TextEditingController _searchController;
+  late final FocusNode _searchFocusNode;
+  late String _lastSyncedQuery;
+  String? _pendingQuerySync;
 
   @override
   void initState() {
     super.initState();
 
+    final initialQuery = widget.initialIntent?.query ?? '';
     _searchController = TextEditingController(
-      text: widget.initialIntent?.query ?? '',
+      text: initialQuery,
+    );
+    _searchFocusNode = FocusNode()..addListener(_applyPendingQuerySync);
+    _lastSyncedQuery = initialQuery;
+    ref.listenManual<SearchState>(
+      searchNotifierProvider,
+      (previous, next) {
+        if (previous?.searchQuery == next.searchQuery) return;
+        _syncSearchController(next.searchQuery);
+      },
     );
     _searchInitialIntent(widget.initialIntent);
   }
@@ -37,12 +50,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final initialIntent = widget.initialIntent;
     if (oldWidget.initialIntent == initialIntent) return;
 
-    _syncSearchController(initialIntent?.query ?? '');
+    _syncSearchController(initialIntent?.query ?? '', force: true);
     _searchInitialIntent(initialIntent);
   }
 
   @override
   void dispose() {
+    _searchFocusNode
+      ..removeListener(_applyPendingQuerySync)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -60,27 +76,34 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return initialIntent != null && initialIntent != SearchIntent();
   }
 
-  void _syncSearchController(String query) {
-    if (_searchController.text == query) return;
+  void _syncSearchController(String query, {bool force = false}) {
+    if (!force &&
+        _searchFocusNode.hasFocus &&
+        _searchController.text != _lastSyncedQuery) {
+      _pendingQuerySync = query;
+      return;
+    }
+
+    _pendingQuerySync = null;
+    if (_searchController.text == query) {
+      _lastSyncedQuery = query;
+      return;
+    }
 
     _searchController.value = _searchController.value.copyWith(
       text: query,
       selection: TextSelection.collapsed(offset: query.length),
       composing: TextRange.empty,
     );
+    _lastSyncedQuery = query;
   }
 
-  String _activeQuery(SearchState state) {
-    if (state.searchQuery.isNotEmpty) {
-      return state.searchQuery;
-    }
+  void _applyPendingQuerySync() {
+    if (_searchFocusNode.hasFocus) return;
 
-    final initialIntent = widget.initialIntent;
-    if (initialIntent != null && initialIntent.query.isNotEmpty) {
-      return initialIntent.query;
-    }
-
-    return state.searchQuery;
+    final pendingQuery = _pendingQuerySync;
+    if (pendingQuery == null) return;
+    _syncSearchController(pendingQuery, force: true);
   }
 
   void _showFilterBottomSheet(BuildContext context) {
@@ -96,7 +119,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(searchNotifierProvider);
     final notifier = ref.read(searchNotifierProvider.notifier);
-    _syncSearchController(_activeQuery(state));
 
     // List of active filters
     final activeFilters = <String>[];
@@ -123,6 +145,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 Expanded(
                   child: SearchBar(
                     controller: _searchController,
+                    focusNode: _searchFocusNode,
                     hintText: 'Nhập tên quán, địa chỉ...',
                     leading: const Icon(Icons.search),
                     onSubmitted: (query) => notifier.updateQuery(query),
