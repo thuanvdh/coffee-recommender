@@ -39,4 +39,16 @@ void main() {
     expect(failure.type, AppFailureType.server);
     expect(failure.statusCode, 500);
   });
+
+  test('maps cancellation with response to unknown failure', () {
+    final error = DioException(
+      requestOptions: requestOptions(),
+      response: Response(statusCode: 500, requestOptions: requestOptions()),
+      type: DioExceptionType.cancel,
+    );
+
+    final failure = ApiErrorMapper.map(error);
+
+    expect(failure.type, AppFailureType.unknown);
+  });
 }

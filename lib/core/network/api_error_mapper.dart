@@ -4,11 +4,6 @@ import 'package:coffee_recommender/core/result/app_failure.dart';
 class ApiErrorMapper {
   static AppFailure map(Object error) {
     if (error is DioException) {
-      final statusCode = error.response?.statusCode;
-      if (statusCode != null) {
-        return _fromStatusCode(statusCode);
-      }
-
       return switch (error.type) {
         DioExceptionType.connectionTimeout ||
         DioExceptionType.sendTimeout ||
@@ -16,6 +11,8 @@ class ApiErrorMapper {
           const AppFailure.timeout(),
         DioExceptionType.connectionError => const AppFailure.network(),
         DioExceptionType.badResponse =>
+          _fromStatusCode(error.response?.statusCode),
+        DioExceptionType.unknown when error.response?.statusCode != null =>
           _fromStatusCode(error.response?.statusCode),
         DioExceptionType.cancel ||
         DioExceptionType.badCertificate ||
