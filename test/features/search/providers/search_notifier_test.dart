@@ -63,6 +63,7 @@ void main() {
             'purpose': 'Làm việc',
             'amenity': 'Máy lạnh',
           },
+          cacheResult: false,
         ),
       ).thenAnswer((_) async => Result.success([_shop]));
 
@@ -81,6 +82,7 @@ void main() {
       expect(state.rankedShops.single.score, 50);
       expect(state.shops, [_shop]);
       expect(state.error, isNull);
+      verify(() => repository.cacheShops([_shop])).called(1);
     });
 
     test('older delayed search cannot overwrite newer results', () async {
@@ -104,6 +106,7 @@ void main() {
       expect(subject.debugState.status, SearchStateStatus.success);
       expect(subject.debugState.searchQuery, 'new');
       expect(subject.debugState.shops, [_newerShop]);
+      expect(delayedRepository.cachedShops, [_newerShop]);
 
       delayedRepository.completeQuery(
         'old',
@@ -114,6 +117,48 @@ void main() {
       expect(subject.debugState.status, SearchStateStatus.success);
       expect(subject.debugState.searchQuery, 'new');
       expect(subject.debugState.shops, [_newerShop]);
+      expect(delayedRepository.cachedShops, [_newerShop]);
+    });
+
+    test(
+        'older out-of-order success cannot change cache used by later stale fallback',
+        () async {
+      final delayedRepository = DelayedSearchRepository(dioClient);
+      final subject = SearchNotifier(
+        dioClient,
+        repository: delayedRepository,
+        queryBuilder: SearchQueryBuilder(),
+        rankingService: ShopRankingService(),
+      );
+
+      final olderSearch = subject.search(SearchIntent(query: 'old'));
+      final newerSearch = subject.search(SearchIntent(query: 'new'));
+
+      delayedRepository.completeQuery(
+        'new',
+        Result.success([_newerShop]),
+      );
+      await newerSearch;
+
+      delayedRepository.completeQuery(
+        'old',
+        Result.success([_olderShop]),
+      );
+      await olderSearch;
+
+      expect(delayedRepository.cachedShops, [_newerShop]);
+
+      final failedSearch = subject.search(SearchIntent(query: 'fail'));
+      delayedRepository.completeQuery(
+        'fail',
+        const Result.failure(AppFailure.network()),
+      );
+      await failedSearch;
+
+      expect(subject.debugState.status, SearchStateStatus.stale);
+      expect(subject.debugState.searchQuery, 'fail');
+      expect(subject.debugState.shops, [_newerShop]);
+      expect(subject.debugState.shops, isNot(contains(_olderShop)));
     });
 
     test('typed search populates compatibility fields from intent and filter',
@@ -129,6 +174,7 @@ void main() {
             'lat': 16.07,
             'lon': 108.22,
           },
+          cacheResult: false,
         ),
       ).thenAnswer((_) async => Result.success([_shop]));
 
@@ -175,6 +221,7 @@ void main() {
             'purpose': 'Làm việc',
             'district': 'Hải Châu',
           },
+          cacheResult: false,
         ),
       ).thenAnswer((_) async => Result.success([_shop]));
 
@@ -197,7 +244,10 @@ void main() {
     test('uses cached shops as stale state on failure', () async {
       when(() => repository.cachedShops).thenReturn([_shop]);
       when(
-        () => repository.fetchShops(queryParameters: <String, dynamic>{}),
+        () => repository.fetchShops(
+          queryParameters: <String, dynamic>{},
+          cacheResult: false,
+        ),
       ).thenAnswer(
         (_) async => const Result.failure(AppFailure.network()),
       );
@@ -212,7 +262,10 @@ void main() {
 
     test('sets failure state when request fails without cache', () async {
       when(
-        () => repository.fetchShops(queryParameters: <String, dynamic>{}),
+        () => repository.fetchShops(
+          queryParameters: <String, dynamic>{},
+          cacheResult: false,
+        ),
       ).thenAnswer(
         (_) async => const Result.failure(AppFailure.network()),
       );
@@ -227,7 +280,10 @@ void main() {
 
     test('updateQuery changes query state and triggers fetch', () {
       when(
-        () => repository.fetchShops(queryParameters: {'search': 'espresso'}),
+        () => repository.fetchShops(
+          queryParameters: {'search': 'espresso'},
+          cacheResult: false,
+        ),
       ).thenAnswer((_) async => const Result.success([]));
 
       final subject = notifier();
@@ -239,7 +295,10 @@ void main() {
 
     test('updateDistrict changes district state and triggers fetch', () {
       when(
-        () => repository.fetchShops(queryParameters: {'district': 'Hải Châu'}),
+        () => repository.fetchShops(
+          queryParameters: {'district': 'Hải Châu'},
+          cacheResult: false,
+        ),
       ).thenAnswer((_) async => const Result.success([]));
 
       final subject = notifier();
@@ -263,16 +322,24 @@ class DelayedSearchRepository extends SearchRepository {
   @override
   Future<Result<List<CoffeeShop>>> fetchShops({
     required Map<String, dynamic> queryParameters,
+    bool cacheResult = true,
   }) async {
     final query = queryParameters['search'] as String? ?? '';
     final completer = Completer<Result<List<CoffeeShop>>>();
     _completers[query] = completer;
 
     final result = await completer.future;
-    if (result case Success<List<CoffeeShop>>(:final value)) {
-      _cachedShops = List.unmodifiable(value);
+    if (cacheResult) {
+      if (result case Success<List<CoffeeShop>>(:final value)) {
+        cacheShops(value);
+      }
     }
     return result;
+  }
+
+  @override
+  void cacheShops(List<CoffeeShop> shops) {
+    _cachedShops = List.unmodifiable(shops);
   }
 
   void completeQuery(String query, Result<List<CoffeeShop>> result) {

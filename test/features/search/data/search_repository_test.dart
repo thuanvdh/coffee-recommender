@@ -1,6 +1,7 @@
 import 'package:coffee_recommender/core/network/dio_client.dart';
 import 'package:coffee_recommender/core/result/app_failure.dart';
 import 'package:coffee_recommender/core/result/result.dart';
+import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/data/repositories/search_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -68,6 +69,35 @@ void main() {
 
       expect(result.valueOrNull!.single.slug, 'goc-yen-binh');
       expect(repository.cachedShops, hasLength(1));
+    });
+
+    test('fetchShops can skip caching successful shops', () async {
+      when(
+        () => dio.get<dynamic>(
+          'shops',
+          queryParameters: {'search': 'uncached'},
+        ),
+      ).thenAnswer(
+        (_) async => Response<dynamic>(
+          data: [_shopJson],
+          requestOptions: RequestOptions(path: 'shops'),
+          statusCode: 200,
+        ),
+      );
+
+      final result = await repository.fetchShops(
+        queryParameters: {'search': 'uncached'},
+        cacheResult: false,
+      );
+
+      expect(result.valueOrNull, hasLength(1));
+      expect(repository.cachedShops, isEmpty);
+    });
+
+    test('cacheShops replaces cached shops explicitly', () {
+      repository.cacheShops([CoffeeShop.fromJson(_shopJson)]);
+
+      expect(repository.cachedShops.single.slug, 'goc-yen-binh');
     });
 
     test('returns mapped failure after dio error while preserving cache',

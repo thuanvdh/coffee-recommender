@@ -13,8 +13,13 @@ class SearchRepository {
 
   List<CoffeeShop> get cachedShops => List.unmodifiable(_cachedShops);
 
+  void cacheShops(List<CoffeeShop> shops) {
+    _cachedShops = List.unmodifiable(shops);
+  }
+
   Future<Result<List<CoffeeShop>>> fetchShops({
     required Map<String, dynamic> queryParameters,
+    bool cacheResult = true,
   }) async {
     try {
       final response = await _client.dio.get(
@@ -22,7 +27,9 @@ class SearchRepository {
         queryParameters: queryParameters,
       );
       final shops = _parseShops(response.data);
-      _cachedShops = List.unmodifiable(shops);
+      if (cacheResult) {
+        cacheShops(shops);
+      }
       return Result.success(shops);
     } on DioException catch (error) {
       return Result.failure(ApiErrorMapper.map(error));

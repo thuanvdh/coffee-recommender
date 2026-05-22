@@ -95,6 +95,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
     );
     final result = await _repository.fetchShops(
       queryParameters: Map<String, dynamic>.from(queryParameters),
+      cacheResult: false,
     );
     if (requestId != _searchRequestId) {
       return;
@@ -102,6 +103,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
     switch (result) {
       case Success<List<CoffeeShop>>(:final value):
+        _repository.cacheShops(value);
         _setSuccessfulState(
             intent: intent, filter: effectiveFilter, shops: value);
       case Failure<List<CoffeeShop>>(:final failure):
