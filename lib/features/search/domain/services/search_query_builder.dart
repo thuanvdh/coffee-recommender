@@ -4,17 +4,30 @@ import 'package:coffee_recommender/features/search/domain/models/search_intent.d
 class SearchQueryBuilder {
   Map<String, Object> build({
     required SearchIntent intent,
-    SearchFilter filter = const SearchFilter(),
+    SearchFilter? filter,
   }) {
+    final effectiveFilter = filter ?? SearchFilter();
     final params = <String, Object>{};
 
     _addString(params, 'search', intent.query);
-    _addString(params, 'purpose', filter.purpose ?? _first(intent.purposeTags));
-    _addString(params, 'amenity', filter.amenity ?? _first(intent.amenityTags));
-    _addString(params, 'space', filter.space ?? _first(intent.spaceTags));
-    _addString(params, 'district', filter.district ?? intent.district);
+    _addString(
+      params,
+      'purpose',
+      effectiveFilter.purpose ?? _first(intent.purposeTags),
+    );
+    _addString(
+      params,
+      'amenity',
+      effectiveFilter.amenity ?? _first(intent.amenityTags),
+    );
+    _addString(
+      params,
+      'space',
+      effectiveFilter.space ?? _first(intent.spaceTags),
+    );
+    _addString(params, 'district', effectiveFilter.district ?? intent.district);
 
-    final openNow = filter.openNow ?? intent.openNow;
+    final openNow = effectiveFilter.openNow ?? intent.openNow;
     if (openNow) {
       params['open_now'] = true;
     }
