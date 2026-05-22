@@ -85,6 +85,25 @@ void main() {
       verify(() => repository.cacheShops([_shop])).called(1);
     });
 
+    test('successful empty search sets empty state', () async {
+      when(
+        () => repository.fetchShops(
+          queryParameters: <String, dynamic>{},
+          cacheResult: false,
+        ),
+      ).thenAnswer((_) async => const Result.success([]));
+
+      final subject = notifier();
+      await subject.search(SearchIntent());
+
+      final state = subject.debugState;
+      expect(state.status, SearchStateStatus.empty);
+      expect(state.isLoading, isFalse);
+      expect(state.shops, isEmpty);
+      expect(state.rankedShops, isEmpty);
+      expect(state.error, isNull);
+    });
+
     test('older delayed search cannot overwrite newer results', () async {
       final delayedRepository = DelayedSearchRepository(dioClient);
       final subject = SearchNotifier(
