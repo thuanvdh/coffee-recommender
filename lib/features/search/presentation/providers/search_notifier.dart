@@ -125,7 +125,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
       }
 
       final response = await _dioClient.dio.get(
-        '/shops',
+        'shops',
         queryParameters: queryParameters,
       );
 
@@ -146,7 +146,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
   Future<Review?> submitReview(int shopId, String userName, int rating, String comment) async {
     try {
       final response = await _dioClient.dio.post(
-        '/shops/$shopId/reviews',
+        'shops/$shopId/reviews',
         data: {
           'user_name': userName,
           'rating': rating,
@@ -165,7 +165,7 @@ class SearchNotifier extends StateNotifier<SearchState> {
   Future<bool> submitSuggestion(Map<String, dynamic> data) async {
     try {
       final response = await _dioClient.dio.post(
-        '/suggestions',
+        'suggestions',
         data: data,
       );
       return response.statusCode == 200 || response.statusCode == 201;

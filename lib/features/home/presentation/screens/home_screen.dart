@@ -430,7 +430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 16),
                       // Horizontal scroll of top new shops
                       SizedBox(
-                        height: 270,
+                        height: 340,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           itemCount: min(4, searchState.shops.length),

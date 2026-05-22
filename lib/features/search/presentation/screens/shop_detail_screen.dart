@@ -11,7 +11,7 @@ import 'package:coffee_recommender/features/search/presentation/providers/favori
 /// Provider to fetch shop details by slug
 final shopDetailProvider = FutureProvider.family<CoffeeShop, String>((ref, slug) async {
   final dioClient = ref.watch(searchDioClientProvider);
-  final response = await dioClient.dio.get('/shops/slug/$slug');
+  final response = await dioClient.dio.get('shops/slug/$slug');
   if (response.statusCode == 200 && response.data != null) {
     final responseData = response.data;
     Map<String, dynamic> shopJson;

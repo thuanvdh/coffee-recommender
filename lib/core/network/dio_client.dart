@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class DioClient {
   final Dio _dio;
-  final String baseUrl = 'http://localhost:8000/api';
+  final String baseUrl = 'http://localhost:8000/api/';
 
   DioClient(this._dio) {
     _dio.options.baseUrl = baseUrl;
