@@ -1,10 +1,10 @@
 import 'package:coffee_recommender/features/home/presentation/screens/home_screen.dart';
 import 'package:coffee_recommender/features/navigation/presentation/main_shell.dart';
+import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:coffee_recommender/features/search/presentation/screens/search_screen.dart';
 import 'package:coffee_recommender/features/search/presentation/screens/shop_detail_screen.dart';
 import 'package:coffee_recommender/features/suggest/presentation/screens/suggest_screen.dart';
 import 'package:coffee_recommender/features/about/presentation/screens/about_screen.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 final appRouter = GoRouter(
@@ -37,7 +37,12 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: '/search',
-          builder: (context, state) => const SearchScreen(),
+          builder: (context, state) {
+            final intent = state.extra is SearchIntent
+                ? state.extra! as SearchIntent
+                : SearchIntent();
+            return SearchScreen(initialIntent: intent);
+          },
         ),
         GoRoute(
           path: '/suggest',
@@ -58,4 +63,3 @@ final appRouter = GoRouter(
     ),
   ],
 );
-

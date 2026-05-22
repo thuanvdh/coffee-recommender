@@ -1,11 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/search_notifier.dart';
 import 'package:coffee_recommender/features/search/presentation/widgets/shop_card.dart';
 import 'package:coffee_recommender/features/search/presentation/widgets/filter_bottom_sheet.dart';
 
-class SearchScreen extends ConsumerWidget {
-  const SearchScreen({super.key});
+class SearchScreen extends ConsumerStatefulWidget {
+  const SearchScreen({
+    super.key,
+    this.initialIntent,
+  });
+
+  final SearchIntent? initialIntent;
+
+  @override
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends ConsumerState<SearchScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    final initialIntent = widget.initialIntent;
+    if (initialIntent != null && initialIntent != SearchIntent()) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(searchNotifierProvider.notifier).search(initialIntent);
+      });
+    }
+  }
 
   void _showFilterBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -17,10 +41,9 @@ class SearchScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(searchNotifierProvider);
     final notifier = ref.read(searchNotifierProvider.notifier);
-    final theme = Theme.of(context);
 
     // List of active filters
     final activeFilters = <String>[];
@@ -110,11 +133,13 @@ class SearchScreen extends ConsumerWidget {
               child: state.isLoading && state.shops.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : state.error != null && state.shops.isEmpty
-                      ? _buildErrorView(context, state.error ?? 'Đã xảy ra lỗi', notifier)
+                      ? _buildErrorView(
+                          context, state.error ?? 'Đã xảy ra lỗi', notifier)
                       : state.shops.isEmpty
                           ? _buildEmptyView(context)
                           : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
                               itemCount: state.shops.length,
                               itemBuilder: (context, index) {
                                 final shop = state.shops[index];
@@ -156,7 +181,8 @@ class SearchScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorView(BuildContext context, String error, SearchNotifier notifier) {
+  Widget _buildErrorView(
+      BuildContext context, String error, SearchNotifier notifier) {
     final theme = Theme.of(context);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),

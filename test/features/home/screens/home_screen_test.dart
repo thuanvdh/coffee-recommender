@@ -6,7 +6,8 @@ import 'package:coffee_recommender/features/home/presentation/widgets/weather_wi
 import '../../../helpers/test_helpers.dart';
 
 void main() {
-  testWidgets('HomeScreen renders header, weather, mood explorer and districts', (WidgetTester tester) async {
+  testWidgets('HomeScreen renders search, smart chips, weather and districts',
+      (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: getTestOverrides(),
@@ -18,16 +19,19 @@ void main() {
 
     // Verify Title / Slogan
     expect(find.text('Cafe là văn hóa'), findsOneWidget);
-    expect(find.text('Khám phá góc nhỏ\ntuyệt vời tại Đà Nẵng'), findsOneWidget);
+    expect(
+        find.text('Khám phá góc nhỏ\ntuyệt vời tại Đà Nẵng'), findsOneWidget);
+
+    // Verify search-led discovery is primary
+    expect(find.byType(SearchBar), findsOneWidget);
+    expect(find.text('Tìm quán, khu vực, phong cách...'), findsOneWidget);
+    expect(find.text('Gần tôi'), findsOneWidget);
+    expect(find.text('Làm việc yên tĩnh'), findsOneWidget);
+    expect(find.text('Hẹn hò'), findsOneWidget);
+    expect(find.text('Check-in'), findsOneWidget);
 
     // Verify Weather Widget is present
     expect(find.byType(WeatherWidget), findsOneWidget);
-
-    // Verify mood cards text
-    expect(find.text('Học bài & Làm việc'), findsOneWidget);
-    expect(find.text('Hẹn hò lãng mạn'), findsOneWidget);
-    expect(find.text('Tụ tập bạn bè'), findsOneWidget);
-    expect(find.text('Check-in sống ảo'), findsOneWidget);
 
     // Verify district chips are present
     expect(find.text('Hải Châu'), findsOneWidget);
