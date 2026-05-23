@@ -58,7 +58,17 @@ final appRouter = GoRouter(
       path: '/shop/:slug',
       builder: (context, state) {
         final slug = state.pathParameters['slug'] ?? '';
-        return ShopDetailScreen(slug: slug);
+        final extra = state.extra;
+        final matchReasons = switch (extra) {
+          ShopDetailRouteExtra(:final matchReasons) => matchReasons,
+          final List<String> reasons => reasons,
+          final List<dynamic> reasons => reasons.whereType<String>().toList(),
+          _ => const <String>[],
+        };
+        return ShopDetailScreen(
+          slug: slug,
+          matchReasons: matchReasons,
+        );
       },
     ),
   ],

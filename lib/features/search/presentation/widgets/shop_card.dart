@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/favorites_provider.dart';
+import 'package:coffee_recommender/features/search/presentation/screens/shop_detail_screen.dart';
 
 class ShopCard extends ConsumerWidget {
   final CoffeeShop shop;
@@ -59,7 +60,10 @@ class ShopCard extends ConsumerWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16.0),
         child: InkWell(
-          onTap: () => context.push('/shop/${shop.slug}'),
+          onTap: () => context.push(
+            '/shop/${shop.slug}',
+            extra: ShopDetailRouteExtra(matchReasons: matchReasons),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

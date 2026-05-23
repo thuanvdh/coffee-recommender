@@ -7,36 +7,24 @@ import 'package:intl/intl.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/search_notifier.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/favorites_provider.dart';
+import 'package:coffee_recommender/features/shop_detail/presentation/controllers/shop_detail_controller.dart';
 
-/// Provider to fetch shop details by slug
-final shopDetailProvider = FutureProvider.family<CoffeeShop, String>((ref, slug) async {
-  final dioClient = ref.watch(searchDioClientProvider);
-  final response = await dioClient.dio.get('shops/slug/$slug');
-  if (response.statusCode == 200 && response.data != null) {
-    final responseData = response.data;
-    Map<String, dynamic> shopJson;
-    if (responseData is Map<String, dynamic>) {
-      if (responseData.containsKey('shop')) {
-        shopJson = responseData['shop'] as Map<String, dynamic>;
-      } else if (responseData.containsKey('data')) {
-        shopJson = responseData['data'] as Map<String, dynamic>;
-      } else {
-        shopJson = responseData;
-      }
-    } else {
-      throw Exception('Invalid response format');
-    }
-    return CoffeeShop.fromJson(shopJson);
-  }
-  throw Exception('Failed to load shop details');
-});
+class ShopDetailRouteExtra {
+  const ShopDetailRouteExtra({
+    this.matchReasons = const [],
+  });
+
+  final List<String> matchReasons;
+}
 
 class ShopDetailScreen extends ConsumerStatefulWidget {
   final String slug;
+  final List<String> matchReasons;
 
   const ShopDetailScreen({
     super.key,
     required this.slug,
+    this.matchReasons = const [],
   });
 
   @override
@@ -54,406 +42,456 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
 
   double _getAverageRating(CoffeeShop shop) {
     if (shop.reviews.isEmpty) return 4.5;
-    final total = shop.reviews.map((r) => r.rating).fold<int>(0, (sum, item) => sum + item);
+    final total = shop.reviews
+        .map((r) => r.rating)
+        .fold<int>(0, (sum, item) => sum + item);
     return total / shop.reviews.length;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final detailAsync = ref.watch(shopDetailProvider(widget.slug));
+    final detailState = ref.watch(shopDetailControllerProvider(widget.slug));
+    final shop = detailState.shop;
 
     return Scaffold(
-      body: detailAsync.when(
-        data: (shop) {
-          final isDark = theme.brightness == Brightness.dark;
-          final isOpen = shop.status.toLowerCase() == 'open';
-          final favoriteList = ref.watch(favoritesProvider);
-          final isFav = favoriteList.contains(shop.slug);
+      body: shop != null
+          ? Builder(
+              builder: (context) {
+                final isDark = theme.brightness == Brightness.dark;
+                final isOpen = shop.status.toLowerCase() == 'open';
+                final favoriteList = ref.watch(favoritesProvider);
+                final isFav = favoriteList.contains(shop.slug);
 
-          // Collect all image URLs for carousel
-          final List<String> imageUrls = [];
-          if (shop.images.isNotEmpty) {
-            imageUrls.addAll(shop.images.map((img) => img.url));
-          }
-          final imageUrl = shop.imageUrl;
-          if (imageUrls.isEmpty && imageUrl != null && imageUrl.isNotEmpty) {
-            imageUrls.add(imageUrl);
-          }
-          if (imageUrls.isEmpty) {
-            imageUrls.add('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800');
-          }
+                // Collect all image URLs for carousel
+                final List<String> imageUrls = [];
+                if (shop.images.isNotEmpty) {
+                  imageUrls.addAll(shop.images.map((img) => img.url));
+                }
+                final imageUrl = shop.imageUrl;
+                if (imageUrls.isEmpty &&
+                    imageUrl != null &&
+                    imageUrl.isNotEmpty) {
+                  imageUrls.add(imageUrl);
+                }
+                if (imageUrls.isEmpty) {
+                  imageUrls.add(
+                      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800');
+                }
 
-          // Filter drinks and pastries
-          final drinks = shop.drinks.where((d) => d.category.toLowerCase() == 'drink').toList();
-          final pastries = shop.drinks.where((d) => d.category.toLowerCase() == 'pastry').toList();
-          final address = shop.address;
-          final description = shop.description;
+                // Filter drinks and pastries
+                final drinks = shop.drinks
+                    .where((d) => d.category.toLowerCase() == 'drink')
+                    .toList();
+                final pastries = shop.drinks
+                    .where((d) => d.category.toLowerCase() == 'pastry')
+                    .toList();
+                final address = shop.address;
+                final description = shop.description;
 
-          return CustomScrollView(
-            slivers: [
-              // App Bar with multiple image carousel and favorites toggler
-              SliverAppBar(
-                expandedHeight: 300.0,
-                pinned: true,
-                stretch: true,
-                leading: Container(
-                  margin: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(LucideIcons.arrow_left, color: Colors.white, size: 20.0),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                actions: [
-                  Container(
-                    margin: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        isFav ? LucideIcons.heart : LucideIcons.heart,
-                        color: isFav ? const Color(0xFFEF4444) : Colors.white,
-                        size: 20.0,
-                      ),
-                      onPressed: () {
-                        ref.read(favoritesProvider.notifier).toggleFavorite(shop.slug);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isFav 
-                                  ? 'Đã xóa khỏi danh sách yêu thích' 
-                                  : 'Đã thêm vào danh sách yêu thích'
-                            ),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      PageView.builder(
-                        controller: _pageController,
-                        itemCount: imageUrls.length,
-                        itemBuilder: (context, index) {
-                          return CachedNetworkImage(
-                            imageUrl: imageUrls[index],
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: theme.colorScheme.surfaceVariant,
-                              child: const Center(child: CircularProgressIndicator()),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: theme.colorScheme.surfaceVariant,
-                              child: const Icon(LucideIcons.image_off, size: 64.0),
-                            ),
-                          );
-                        },
-                      ),
-                      // Gradient Overlays for readability and depth
-                      const DecoratedBox(
+                return CustomScrollView(
+                  slivers: [
+                    // App Bar with multiple image carousel and favorites toggler
+                    SliverAppBar(
+                      expandedHeight: 300.0,
+                      pinned: true,
+                      stretch: true,
+                      leading: Container(
+                        margin: const EdgeInsets.all(8.0),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black45,
-                              Colors.transparent,
-                              Colors.transparent,
-                              Colors.black87,
-                            ],
-                            stops: [0.0, 0.25, 0.7, 1.0],
-                          ),
+                          color: Colors.black.withOpacity(0.4),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(LucideIcons.arrow_left,
+                              color: Colors.white, size: 20.0),
+                          onPressed: () => Navigator.of(context).pop(),
                         ),
                       ),
-                      // Smooth Page Indicator
-                      if (imageUrls.length > 1)
-                        Positioned(
-                          bottom: 20.0,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: SmoothPageIndicator(
-                              controller: _pageController,
-                              count: imageUrls.length,
-                              effect: ExpandingDotsEffect(
-                                activeDotColor: const Color(0xFFC17A2F),
-                                dotColor: Colors.white.withOpacity(0.5),
-                                dotHeight: 6.0,
-                                dotWidth: 6.0,
-                                expansionFactor: 4,
-                                spacing: 6.0,
-                              ),
+                      actions: [
+                        Container(
+                          margin: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              isFav ? LucideIcons.heart : LucideIcons.heart,
+                              color: isFav
+                                  ? const Color(0xFFEF4444)
+                                  : Colors.white,
+                              size: 20.0,
                             ),
+                            onPressed: () {
+                              ref
+                                  .read(favoritesProvider.notifier)
+                                  .toggleFavorite(shop.slug);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(isFav
+                                      ? 'Đã xóa khỏi danh sách yêu thích'
+                                      : 'Đã thêm vào danh sách yêu thích'),
+                                  duration: const Duration(seconds: 1),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Detail Content
-              SliverList(
-                delegate: SliverChildListDelegate([
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title, Status Row
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      ],
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Stack(
+                          fit: StackFit.expand,
                           children: [
-                            Expanded(
-                              child: Text(
-                                shop.name,
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
+                            PageView.builder(
+                              controller: _pageController,
+                              itemCount: imageUrls.length,
+                              itemBuilder: (context, index) {
+                                return CachedNetworkImage(
+                                  imageUrl: imageUrls[index],
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: theme.colorScheme.surfaceVariant,
+                                    child: const Center(
+                                        child: CircularProgressIndicator()),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                    color: theme.colorScheme.surfaceVariant,
+                                    child: const Icon(LucideIcons.image_off,
+                                        size: 64.0),
+                                  ),
+                                );
+                              },
                             ),
-                            const SizedBox(width: 12.0),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                            // Gradient Overlays for readability and depth
+                            const DecoratedBox(
                               decoration: BoxDecoration(
-                                color: isOpen 
-                                    ? const Color(0xFF10B981).withOpacity(0.15) 
-                                    : const Color(0xFFEF4444).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(30.0),
-                                border: Border.all(
-                                  color: isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                  width: 1.0,
-                                ),
-                              ),
-                              child: Text(
-                                isOpen ? 'Đang mở' : 'Đóng cửa',
-                                style: TextStyle(
-                                  color: isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                  fontSize: 12.0,
-                                  fontWeight: FontWeight.bold,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black45,
+                                    Colors.transparent,
+                                    Colors.transparent,
+                                    Colors.black87,
+                                  ],
+                                  stops: [0.0, 0.25, 0.7, 1.0],
                                 ),
                               ),
                             ),
+                            // Smooth Page Indicator
+                            if (imageUrls.length > 1)
+                              Positioned(
+                                bottom: 20.0,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: SmoothPageIndicator(
+                                    controller: _pageController,
+                                    count: imageUrls.length,
+                                    effect: ExpandingDotsEffect(
+                                      activeDotColor: const Color(0xFFC17A2F),
+                                      dotColor: Colors.white.withOpacity(0.5),
+                                      dotHeight: 6.0,
+                                      dotWidth: 6.0,
+                                      expansionFactor: 4,
+                                      spacing: 6.0,
+                                    ),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                        const SizedBox(height: 10.0),
+                      ),
+                    ),
 
-                        // Rating and District Row
-                        Row(
-                          children: [
-                            const Icon(LucideIcons.star, color: Colors.amber, size: 18.0),
-                            const SizedBox(width: 4.0),
-                            Text(
-                              _getAverageRating(shop).toStringAsFixed(1),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 4.0),
-                            Text(
-                              '(${shop.reviews.length} đánh giá)',
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                                fontSize: 13.0,
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                            Text(
-                              '•',
-                              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.3)),
-                            ),
-                            const SizedBox(width: 8.0),
-                            Icon(
-                              LucideIcons.map_pin, 
-                              color: theme.colorScheme.secondary, 
-                              size: 15.0,
-                            ),
-                            const SizedBox(width: 4.0),
-                            Text(
-                              shop.district ?? 'Đà Nẵng',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20.0),
-
-                        // Sidebar Details Grid (2x2 key facts)
-                        _SidebarInfoGrid(shop: shop),
-                        const SizedBox(height: 24.0),
-
-                        // Address Box
-                        if (address != null) ...[
-                          Container(
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12.0),
-                              border: Border.all(
-                                color: theme.colorScheme.outline.withOpacity(isDark ? 0.2 : 0.08),
-                              ),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  LucideIcons.map,
-                                  color: theme.colorScheme.primary,
-                                  size: 20.0,
-                                ),
-                                const SizedBox(width: 12.0),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Địa chỉ chính xác',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13.0,
-                                        ),
+                    // Detail Content
+                    SliverList(
+                      delegate: SliverChildListDelegate([
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title, Status Row
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      shop.name,
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.5,
                                       ),
-                                      const SizedBox(height: 4.0),
-                                      Text(
-                                        address,
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                          height: 1.4,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12.0),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12.0, vertical: 6.0),
+                                    decoration: BoxDecoration(
+                                      color: isOpen
+                                          ? const Color(0xFF10B981)
+                                              .withOpacity(0.15)
+                                          : const Color(0xFFEF4444)
+                                              .withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(30.0),
+                                      border: Border.all(
+                                        color: isOpen
+                                            ? const Color(0xFF10B981)
+                                            : const Color(0xFFEF4444),
+                                        width: 1.0,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isOpen ? 'Đang mở' : 'Đóng cửa',
+                                      style: TextStyle(
+                                        color: isOpen
+                                            ? const Color(0xFF10B981)
+                                            : const Color(0xFFEF4444),
+                                        fontSize: 12.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10.0),
+
+                              // Rating and District Row
+                              Row(
+                                children: [
+                                  const Icon(LucideIcons.star,
+                                      color: Colors.amber, size: 18.0),
+                                  const SizedBox(width: 4.0),
+                                  Text(
+                                    _getAverageRating(shop).toStringAsFixed(1),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4.0),
+                                  Text(
+                                    '(${shop.reviews.length} đánh giá)',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.5),
+                                      fontSize: 13.0,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8.0),
+                                  Text(
+                                    '•',
+                                    style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.3)),
+                                  ),
+                                  const SizedBox(width: 8.0),
+                                  Icon(
+                                    LucideIcons.map_pin,
+                                    color: theme.colorScheme.secondary,
+                                    size: 15.0,
+                                  ),
+                                  const SizedBox(width: 4.0),
+                                  Text(
+                                    shop.district ?? 'Đà Nẵng',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.secondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20.0),
+
+                              // Sidebar Details Grid (2x2 key facts)
+                              _SidebarInfoGrid(shop: shop),
+                              const SizedBox(height: 24.0),
+
+                              // Address Box
+                              if (address != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.all(16.0),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: theme.colorScheme.outline
+                                          .withOpacity(isDark ? 0.2 : 0.08),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        LucideIcons.map,
+                                        color: theme.colorScheme.primary,
+                                        size: 20.0,
+                                      ),
+                                      const SizedBox(width: 12.0),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Địa chỉ chính xác',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13.0,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4.0),
+                                            Text(
+                                              address,
+                                              style: theme.textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                color: theme
+                                                    .colorScheme.onSurface
+                                                    .withOpacity(0.7),
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
+                                const SizedBox(height: 24.0),
                               ],
-                            ),
-                          ),
-                          const SizedBox(height: 24.0),
-                        ],
 
-                        // Divider
-                        Divider(color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08)),
-                        const SizedBox(height: 20.0),
+                              // Divider
+                              Divider(
+                                  color: theme.colorScheme.outline
+                                      .withOpacity(isDark ? 0.15 : 0.08)),
+                              const SizedBox(height: 20.0),
 
-                        // Purposes (Phù hợp với)
-                        if (shop.purposes.isNotEmpty) ...[
-                          const _SectionTitle('Phù hợp với'),
-                          const SizedBox(height: 12.0),
-                          Wrap(
-                            spacing: 8.0,
-                            runSpacing: 8.0,
-                            children: shop.purposes.map((p) => _DetailChip(text: p, color: theme.colorScheme.primary)).toList(),
-                          ),
-                          const SizedBox(height: 24.0),
-                        ],
+                              // Match Reasons
+                              if (widget.matchReasons.isNotEmpty) ...[
+                                const _SectionTitle('Vì sao phù hợp'),
+                                const SizedBox(height: 12.0),
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 8.0,
+                                  children: widget.matchReasons
+                                      .map((reason) => _DetailChip(
+                                            text: reason,
+                                            color: const Color(0xFFC17A2F),
+                                          ))
+                                      .toList(),
+                                ),
+                                const SizedBox(height: 24.0),
+                              ],
 
-                        // Spaces (Không gian)
-                        if (shop.spaces.isNotEmpty) ...[
-                          const _SectionTitle('Không gian'),
-                          const SizedBox(height: 12.0),
-                          Wrap(
-                            spacing: 8.0,
-                            runSpacing: 8.0,
-                            children: shop.spaces.map((s) => _DetailChip(text: s, color: theme.colorScheme.secondary)).toList(),
-                          ),
-                          const SizedBox(height: 24.0),
-                        ],
+                              // Purposes (Phù hợp với)
+                              if (shop.purposes.isNotEmpty) ...[
+                                const _SectionTitle('Phù hợp với'),
+                                const SizedBox(height: 12.0),
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 8.0,
+                                  children: shop.purposes
+                                      .map((p) => _DetailChip(
+                                          text: p,
+                                          color: theme.colorScheme.primary))
+                                      .toList(),
+                                ),
+                                const SizedBox(height: 24.0),
+                              ],
 
-                        // Amenities (Tiện ích)
-                        if (shop.amenities.isNotEmpty) ...[
-                          const _SectionTitle('Tiện ích nổi bật'),
-                          const SizedBox(height: 12.0),
-                          Wrap(
-                            spacing: 8.0,
-                            runSpacing: 8.0,
-                            children: shop.amenities.map((a) => _DetailChip(text: a, color: Colors.teal)).toList(),
-                          ),
-                          const SizedBox(height: 24.0),
-                        ],
+                              // Spaces (Không gian)
+                              if (shop.spaces.isNotEmpty) ...[
+                                const _SectionTitle('Không gian'),
+                                const SizedBox(height: 12.0),
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 8.0,
+                                  children: shop.spaces
+                                      .map((s) => _DetailChip(
+                                          text: s,
+                                          color: theme.colorScheme.secondary))
+                                      .toList(),
+                                ),
+                                const SizedBox(height: 24.0),
+                              ],
 
-                        // About Section
-                        const _SectionTitle('Giới thiệu quán'),
-                        const SizedBox(height: 12.0),
-                        Text(
-                          description != null && description.isNotEmpty
-                              ? description
-                              : 'Quán cà phê mang phong cách thiết kế hiện đại, tinh tế. Không gian rộng rãi, thoáng mát thích hợp cho cả nhu cầu học tập, làm việc hiệu quả lẫn gặp gỡ trò chuyện cùng bạn bè. Menu đa dạng từ các loại cà phê specialty thơm ngon tới bánh ngọt nướng nóng hổi mỗi ngày.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                            height: 1.5,
+                              // Amenities (Tiện ích)
+                              if (shop.amenities.isNotEmpty) ...[
+                                const _SectionTitle('Tiện ích nổi bật'),
+                                const SizedBox(height: 12.0),
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 8.0,
+                                  children: shop.amenities
+                                      .map((a) => _DetailChip(
+                                          text: a, color: Colors.teal))
+                                      .toList(),
+                                ),
+                                const SizedBox(height: 24.0),
+                              ],
+
+                              // About Section
+                              const _SectionTitle('Giới thiệu quán'),
+                              const SizedBox(height: 12.0),
+                              Text(
+                                description != null && description.isNotEmpty
+                                    ? description
+                                    : 'Quán cà phê mang phong cách thiết kế hiện đại, tinh tế. Không gian rộng rãi, thoáng mát thích hợp cho cả nhu cầu học tập, làm việc hiệu quả lẫn gặp gỡ trò chuyện cùng bạn bè. Menu đa dạng từ các loại cà phê specialty thơm ngon tới bánh ngọt nướng nóng hổi mỗi ngày.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.7),
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 32.0),
+
+                              // Divider
+                              Divider(
+                                  color: theme.colorScheme.outline
+                                      .withOpacity(isDark ? 0.15 : 0.08)),
+                              const SizedBox(height: 24.0),
+
+                              // Menu Section (Categorized)
+                              _MenuSection(drinks: drinks, pastries: pastries),
+                              const SizedBox(height: 32.0),
+
+                              // Divider
+                              Divider(
+                                  color: theme.colorScheme.outline
+                                      .withOpacity(isDark ? 0.15 : 0.08)),
+                              const SizedBox(height: 24.0),
+
+                              // Add Review Form
+                              _ReviewForm(shopId: shop.id, slug: shop.slug),
+                              const SizedBox(height: 32.0),
+
+                              // Reviews List
+                              _ReviewsList(reviews: shop.reviews),
+                              const SizedBox(height: 40.0),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 32.0),
-
-                        // Divider
-                        Divider(color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08)),
-                        const SizedBox(height: 24.0),
-
-                        // Menu Section (Categorized)
-                        _MenuSection(drinks: drinks, pastries: pastries),
-                        const SizedBox(height: 32.0),
-
-                        // Divider
-                        Divider(color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08)),
-                        const SizedBox(height: 24.0),
-
-                        // Add Review Form
-                        _ReviewForm(shopId: shop.id, slug: shop.slug),
-                        const SizedBox(height: 32.0),
-
-                        // Reviews List
-                        _ReviewsList(reviews: shop.reviews),
-                        const SizedBox(height: 40.0),
-                      ],
+                      ]),
                     ),
-                  ),
-                ]),
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.triangle_alert, size: 48.0, color: theme.colorScheme.error),
-                const SizedBox(height: 16.0),
-                Text(
-                  'Không thể tải thông tin quán cà phê',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8.0),
-                Text(
-                  err.toString(),
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24.0),
-                ElevatedButton.icon(
-                  onPressed: () => ref.refresh(shopDetailProvider(widget.slug)),
-                  icon: const Icon(LucideIcons.refresh_cw, size: 16.0),
-                  label: const Text('Thử lại'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+                  ],
+                );
+              },
+            )
+          : detailState.status == ShopDetailStatus.failure
+              ? _ShopDetailErrorView(
+                  message: detailState.failure?.userMessage ??
+                      'Không thể tải thông tin quán cà phê',
+                  onRetry: () => ref
+                      .read(shopDetailControllerProvider(widget.slug).notifier)
+                      .retry(widget.slug),
+                )
+              : const Center(child: CircularProgressIndicator()),
     );
   }
 }
@@ -471,6 +509,57 @@ class _SectionTitle extends StatelessWidget {
         fontWeight: FontWeight.bold,
         fontSize: 18.0,
         letterSpacing: -0.2,
+      ),
+    );
+  }
+}
+
+class _ShopDetailErrorView extends StatelessWidget {
+  const _ShopDetailErrorView({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              LucideIcons.triangle_alert,
+              size: 48.0,
+              color: theme.colorScheme.error,
+            ),
+            const SizedBox(height: 16.0),
+            Text(
+              'Không thể tải thông tin quán cà phê',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24.0),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(LucideIcons.refresh_cw, size: 16.0),
+              label: const Text('Thử lại'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -593,9 +682,8 @@ class _SidebarInfoGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final distance = shop.distanceKm;
-    final distanceVal = distance != null 
-        ? '${distance.toStringAsFixed(1)} km'
-        : 'Chỉ đường';
+    final distanceVal =
+        distance != null ? '${distance.toStringAsFixed(1)} km' : 'Chỉ đường';
 
     return GridView.count(
       shrinkWrap: true,
@@ -619,11 +707,14 @@ class _SidebarInfoGrid extends StatelessWidget {
           icon: LucideIcons.phone,
           title: 'Số điện thoại',
           value: shop.phone ?? 'Không có',
-          onTap: shop.phone != null ? () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Đang kết nối tới ${shop.phone}...')),
-            );
-          } : null,
+          onTap: shop.phone != null
+              ? () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Đang kết nối tới ${shop.phone}...')),
+                  );
+                }
+              : null,
         ),
         _InfoCard(
           icon: LucideIcons.navigation,
@@ -659,7 +750,6 @@ class _MenuSectionState extends State<_MenuSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -677,8 +767,10 @@ class _MenuSectionState extends State<_MenuSection> {
         const SizedBox(height: 16.0),
         // Active List Display
         _activeMenuTab == 0
-            ? _buildMenuItemsList(theme, widget.drinks, 'Không có nước uống nào được đăng ký.')
-            : _buildMenuItemsList(theme, widget.pastries, 'Không có bánh ngọt nào được đăng ký.'),
+            ? _buildMenuItemsList(
+                theme, widget.drinks, 'Không có nước uống nào được đăng ký.')
+            : _buildMenuItemsList(
+                theme, widget.pastries, 'Không có bánh ngọt nào được đăng ký.'),
       ],
     );
   }
@@ -699,13 +791,13 @@ class _MenuSectionState extends State<_MenuSection> {
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected 
-                ? const Color(0xFFC17A2F) 
+            color: isSelected
+                ? const Color(0xFFC17A2F)
                 : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(10.0),
             border: Border.all(
-              color: isSelected 
-                  ? const Color(0xFFC17A2F) 
+              color: isSelected
+                  ? const Color(0xFFC17A2F)
                   : theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
             ),
           ),
@@ -722,7 +814,8 @@ class _MenuSectionState extends State<_MenuSection> {
     );
   }
 
-  Widget _buildMenuItemsList(ThemeData theme, List<Drink> items, String emptyMessage) {
+  Widget _buildMenuItemsList(
+      ThemeData theme, List<Drink> items, String emptyMessage) {
     final isDark = theme.brightness == Brightness.dark;
     if (items.isEmpty) {
       return Container(
@@ -744,7 +837,7 @@ class _MenuSectionState extends State<_MenuSection> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
       separatorBuilder: (context, index) => Divider(
-        height: 1.0, 
+        height: 1.0,
         color: theme.colorScheme.outline.withOpacity(isDark ? 0.12 : 0.06),
       ),
       itemBuilder: (context, index) {
@@ -770,16 +863,19 @@ class _MenuSectionState extends State<_MenuSection> {
                         if (item.isSignature) ...[
                           const SizedBox(width: 8.0),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6.0, vertical: 2.0),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF59E0B).withOpacity(0.12),
                               borderRadius: BorderRadius.circular(4.0),
-                              border: Border.all(color: const Color(0xFFF59E0B), width: 0.6),
+                              border: Border.all(
+                                  color: const Color(0xFFF59E0B), width: 0.6),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(LucideIcons.sparkles, size: 8.0, color: Color(0xFFF59E0B)),
+                                Icon(LucideIcons.sparkles,
+                                    size: 8.0, color: Color(0xFFF59E0B)),
                                 SizedBox(width: 2.0),
                                 Text(
                                   'Signature',
@@ -796,11 +892,13 @@ class _MenuSectionState extends State<_MenuSection> {
                         if (item.isTrending) ...[
                           const SizedBox(width: 6.0),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6.0, vertical: 2.0),
                             decoration: BoxDecoration(
                               color: const Color(0xFFEF4444).withOpacity(0.12),
                               borderRadius: BorderRadius.circular(4.0),
-                              border: Border.all(color: const Color(0xFFEF4444), width: 0.6),
+                              border: Border.all(
+                                  color: const Color(0xFFEF4444), width: 0.6),
                             ),
                             child: const Text(
                               'Trending',
@@ -819,9 +917,7 @@ class _MenuSectionState extends State<_MenuSection> {
               ),
               const SizedBox(width: 16.0),
               Text(
-                price != null && price.isNotEmpty 
-                    ? price 
-                    : 'Liên hệ',
+                price != null && price.isNotEmpty ? price : 'Liên hệ',
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   color: Color(0xFFC17A2F),
@@ -872,11 +968,11 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
     });
 
     final result = await ref.read(searchNotifierProvider.notifier).submitReview(
-      widget.shopId,
-      _nameController.text.trim(),
-      _selectedRating,
-      _commentController.text.trim(),
-    );
+          widget.shopId,
+          _nameController.text.trim(),
+          _selectedRating,
+          _commentController.text.trim(),
+        );
 
     if (!mounted) return;
 
@@ -897,7 +993,9 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
         _selectedRating = 5;
       });
       // Refresh shop details to show new review
-      ref.refresh(shopDetailProvider(widget.slug));
+      await ref
+          .read(shopDetailControllerProvider(widget.slug).notifier)
+          .load(widget.slug);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -911,7 +1009,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Form(
       key: _formKey,
       child: Column(
@@ -927,13 +1025,14 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
             ),
           ),
           const SizedBox(height: 16.0),
-          
+
           // Star Rating Selector
           Row(
             children: [
               Text(
                 'Đánh giá sao: ',
-                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(width: 8.0),
               Row(
@@ -949,7 +1048,9 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
                       padding: const EdgeInsets.only(right: 6.0),
                       child: Icon(
                         LucideIcons.star,
-                        color: starVal <= _selectedRating ? Colors.amber : theme.colorScheme.outline,
+                        color: starVal <= _selectedRating
+                            ? Colors.amber
+                            : theme.colorScheme.outline,
                         size: 26.0,
                       ),
                     ),
@@ -1020,7 +1121,8 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
                     )
                   : const Text(
                       'Gửi đánh giá',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14.5),
                     ),
             ),
           ),
@@ -1067,7 +1169,7 @@ class _ReviewsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1076,7 +1178,8 @@ class _ReviewsList extends StatelessWidget {
           children: [
             const _SectionTitle('Đánh giá từ khách hàng'),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(12.0),
@@ -1093,7 +1196,6 @@ class _ReviewsList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16.0),
-        
         if (reviews.isEmpty)
           Container(
             width: double.infinity,
@@ -1102,13 +1204,16 @@ class _ReviewsList extends StatelessWidget {
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12.0),
               border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
+                color:
+                    theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
               ),
             ),
             alignment: Alignment.center,
             child: Column(
               children: [
-                Icon(LucideIcons.message_square, size: 36.0, color: theme.colorScheme.outline.withOpacity(0.5)),
+                Icon(LucideIcons.message_square,
+                    size: 36.0,
+                    color: theme.colorScheme.outline.withOpacity(0.5)),
                 const SizedBox(height: 8.0),
                 Text(
                   'Chưa có đánh giá nào',
@@ -1148,7 +1253,8 @@ class _ReviewsList extends StatelessWidget {
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12.0),
                   border: Border.all(
-                    color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
+                    color: theme.colorScheme.outline
+                        .withOpacity(isDark ? 0.15 : 0.08),
                   ),
                 ),
                 child: Column(
@@ -1189,7 +1295,9 @@ class _ReviewsList extends StatelessWidget {
                                       return Icon(
                                         LucideIcons.star,
                                         size: 11.0,
-                                        color: starIdx < review.rating ? Colors.amber : theme.colorScheme.outline,
+                                        color: starIdx < review.rating
+                                            ? Colors.amber
+                                            : theme.colorScheme.outline,
                                       );
                                     }),
                                   ),
@@ -1197,7 +1305,8 @@ class _ReviewsList extends StatelessWidget {
                                   Text(
                                     _formatDate(review.createdAt),
                                     style: TextStyle(
-                                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.4),
                                       fontSize: 11.0,
                                     ),
                                   ),
@@ -1215,7 +1324,8 @@ class _ReviewsList extends StatelessWidget {
                         child: Text(
                           comment,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.85),
+                            color:
+                                theme.colorScheme.onSurface.withOpacity(0.85),
                             height: 1.4,
                           ),
                         ),
