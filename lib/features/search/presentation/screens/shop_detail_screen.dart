@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/search_notifier.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/favorites_provider.dart';
@@ -11,19 +13,23 @@ import 'package:coffee_recommender/features/shop_detail/presentation/controllers
 
 class ShopDetailRouteExtra {
   const ShopDetailRouteExtra({
+    this.initialShop,
     this.matchReasons = const [],
   });
 
+  final CoffeeShop? initialShop;
   final List<String> matchReasons;
 }
 
 class ShopDetailScreen extends ConsumerStatefulWidget {
   final String slug;
+  final CoffeeShop? initialShop;
   final List<String> matchReasons;
 
   const ShopDetailScreen({
     super.key,
     required this.slug,
+    this.initialShop,
     this.matchReasons = const [],
   });
 
@@ -51,7 +57,11 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final detailState = ref.watch(shopDetailControllerProvider(widget.slug));
+    final detailArgs = ShopDetailControllerArgs(
+      slug: widget.slug,
+      initialShop: widget.initialShop,
+    );
+    final detailState = ref.watch(shopDetailControllerProvider(detailArgs));
     final shop = detailState.shop;
 
     return Scaffold(
@@ -315,7 +325,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                   message: detailState.failure!.userMessage,
                                   onRetry: () => ref
                                       .read(shopDetailControllerProvider(
-                                              widget.slug)
+                                              detailArgs)
                                           .notifier)
                                       .retry(widget.slug),
                                 ),
@@ -326,6 +336,25 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                 const _ShopDetailRefreshIndicator(),
                                 const SizedBox(height: 16.0),
                               ],
+
+                              _ShopActionBar(
+                                shop: shop,
+                                isFavorite: isFav,
+                                onToggleFavorite: () {
+                                  ref
+                                      .read(favoritesProvider.notifier)
+                                      .toggleFavorite(shop.slug);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(isFav
+                                          ? 'Đã xóa khỏi danh sách yêu thích'
+                                          : 'Đã thêm vào danh sách yêu thích'),
+                                      duration: const Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 24.0),
 
                               // Sidebar Details Grid (2x2 key facts)
                               _SidebarInfoGrid(shop: shop),
@@ -487,7 +516,11 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                               const SizedBox(height: 24.0),
 
                               // Add Review Form
-                              _ReviewForm(shopId: shop.id, slug: shop.slug),
+                              _ReviewForm(
+                                shopId: shop.id,
+                                slug: shop.slug,
+                                detailArgs: detailArgs,
+                              ),
                               const SizedBox(height: 32.0),
 
                               // Reviews List
@@ -507,7 +540,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                   message: detailState.failure?.userMessage ??
                       'Không thể tải thông tin quán cà phê',
                   onRetry: () => ref
-                      .read(shopDetailControllerProvider(widget.slug).notifier)
+                      .read(shopDetailControllerProvider(detailArgs).notifier)
                       .retry(widget.slug),
                 )
               : const Center(child: CircularProgressIndicator()),
@@ -725,6 +758,176 @@ class _DetailChip extends StatelessWidget {
   }
 }
 
+class _ShopActionBar extends StatelessWidget {
+  const _ShopActionBar({
+    required this.shop,
+    required this.isFavorite,
+    required this.onToggleFavorite,
+  });
+
+  final CoffeeShop shop;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
+
+  @override
+  Widget build(BuildContext context) {
+    final canOpenMap = _ShopDetailActions.hasMapTarget(shop);
+    final canCall = _ShopDetailActions.hasPhone(shop);
+
+    return Wrap(
+      key: const Key('shopDetailActionBar'),
+      spacing: 10.0,
+      runSpacing: 10.0,
+      children: [
+        _ActionPill(
+          key: const Key('shopDetailFavoriteAction'),
+          icon: LucideIcons.heart,
+          label: isFavorite ? 'Đã lưu' : 'Yêu thích',
+          onPressed: onToggleFavorite,
+        ),
+        _ActionPill(
+          key: const Key('shopDetailShareAction'),
+          icon: LucideIcons.share_2,
+          label: 'Chia sẻ',
+          onPressed: () => _ShopDetailActions.share(context, shop),
+        ),
+        _ActionPill(
+          key: const Key('shopDetailDirectionsAction'),
+          icon: LucideIcons.navigation,
+          label: 'Chỉ đường',
+          onPressed: canOpenMap
+              ? () => _ShopDetailActions.openMap(context, shop)
+              : null,
+        ),
+        _ActionPill(
+          key: const Key('shopDetailCallAction'),
+          icon: LucideIcons.phone,
+          label: 'Gọi',
+          onPressed:
+              canCall ? () => _ShopDetailActions.call(context, shop) : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.tonalIcon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16.0),
+      label: Text(label),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(0, 44.0),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
+class _ShopDetailActions {
+  const _ShopDetailActions._();
+
+  static bool hasPhone(CoffeeShop shop) => (shop.phone ?? '').trim().isNotEmpty;
+
+  static bool hasMapTarget(CoffeeShop shop) {
+    return shop.latitude != null ||
+        (shop.address ?? '').trim().isNotEmpty ||
+        shop.name.trim().isNotEmpty;
+  }
+
+  static Future<void> share(BuildContext context, CoffeeShop shop) async {
+    final address = shop.address;
+    final phone = shop.phone;
+    final lines = [
+      shop.name,
+      if (address != null && address.trim().isNotEmpty) address.trim(),
+      if (phone != null && phone.trim().isNotEmpty) 'Phone: ${phone.trim()}',
+    ];
+
+    try {
+      await Share.share(lines.join('\n'));
+    } catch (_) {
+      if (!context.mounted) return;
+      _showFailure(context, 'Không thể chia sẻ quán lúc này.');
+    }
+  }
+
+  static Future<void> openMap(BuildContext context, CoffeeShop shop) async {
+    final uri = _mapUri(shop);
+    if (uri == null) {
+      _showFailure(context, 'Chưa có thông tin bản đồ cho quán này.');
+      return;
+    }
+
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && context.mounted) {
+        _showFailure(context, 'Không thể mở bản đồ lúc này.');
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      _showFailure(context, 'Không thể mở bản đồ lúc này.');
+    }
+  }
+
+  static Future<void> call(BuildContext context, CoffeeShop shop) async {
+    final phone = shop.phone?.trim();
+    if (phone == null || phone.isEmpty) {
+      _showFailure(context, 'Quán chưa có số điện thoại.');
+      return;
+    }
+
+    try {
+      final launched = await launchUrl(Uri(scheme: 'tel', path: phone));
+      if (!launched && context.mounted) {
+        _showFailure(context, 'Không thể gọi số này lúc này.');
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      _showFailure(context, 'Không thể gọi số này lúc này.');
+    }
+  }
+
+  static Uri? _mapUri(CoffeeShop shop) {
+    final query = switch ((shop.latitude, shop.longitude)) {
+      (final double latitude, final double longitude) => '$latitude,$longitude',
+      _ => [shop.name, shop.address]
+          .whereType<String>()
+          .where((value) => value.trim().isNotEmpty)
+          .join(', '),
+    };
+    if (query.trim().isEmpty) return null;
+
+    return Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': query,
+    });
+  }
+
+  static void _showFailure(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+}
+
 class _InfoCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -833,23 +1036,16 @@ class _SidebarInfoGrid extends StatelessWidget {
           title: 'Số điện thoại',
           value: shop.phone ?? 'Không có',
           onTap: shop.phone != null
-              ? () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Đang kết nối tới ${shop.phone}...')),
-                  );
-                }
+              ? () => _ShopDetailActions.call(context, shop)
               : null,
         ),
         _InfoCard(
           icon: LucideIcons.navigation,
           title: 'Vị trí & Khoảng cách',
           value: distanceVal,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Đang mở bản đồ chỉ đường...')),
-            );
-          },
+          onTap: _ShopDetailActions.hasMapTarget(shop)
+              ? () => _ShopDetailActions.openMap(context, shop)
+              : null,
         ),
       ],
     );
@@ -1060,10 +1256,12 @@ class _MenuSectionState extends State<_MenuSection> {
 class _ReviewForm extends ConsumerStatefulWidget {
   final int shopId;
   final String slug;
+  final ShopDetailControllerArgs detailArgs;
 
   const _ReviewForm({
     required this.shopId,
     required this.slug,
+    required this.detailArgs,
   });
 
   @override
@@ -1119,7 +1317,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
       });
       // Refresh shop details to show new review
       await ref
-          .read(shopDetailControllerProvider(widget.slug).notifier)
+          .read(shopDetailControllerProvider(widget.detailArgs).notifier)
           .load(widget.slug);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

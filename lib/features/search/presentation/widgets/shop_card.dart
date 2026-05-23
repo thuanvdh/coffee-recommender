@@ -62,7 +62,10 @@ class ShopCard extends ConsumerWidget {
         child: InkWell(
           onTap: () => context.push(
             '/shop/${shop.slug}',
-            extra: ShopDetailRouteExtra(matchReasons: matchReasons),
+            extra: ShopDetailRouteExtra(
+              initialShop: shop,
+              matchReasons: matchReasons,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

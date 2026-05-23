@@ -65,8 +65,13 @@ final appRouter = GoRouter(
           final List<dynamic> reasons => reasons.whereType<String>().toList(),
           _ => const <String>[],
         };
+        final initialShop = switch (extra) {
+          ShopDetailRouteExtra(:final initialShop) => initialShop,
+          _ => null,
+        };
         return ShopDetailScreen(
           slug: slug,
+          initialShop: initialShop,
           matchReasons: matchReasons,
         );
       },

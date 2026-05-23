@@ -7,8 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:coffee_recommender/features/search/presentation/screens/search_screen.dart';
+import 'package:coffee_recommender/features/search/presentation/screens/shop_detail_screen.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/search_notifier.dart';
+import 'package:coffee_recommender/features/search/presentation/widgets/shop_card.dart';
 import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import '../../../helpers/test_helpers.dart';
 
 class RecordingSearchNotifier extends SearchNotifier {
@@ -219,6 +222,60 @@ void main() {
     expect(find.text('Có máy lạnh'), findsOneWidget);
     expect(find.text('WiFi mạnh'), findsOneWidget);
     expect(find.text('Gửi xe'), findsNothing);
+  });
+
+  testWidgets('SearchScreen shop card passes initial shop to detail route',
+      (WidgetTester tester) async {
+    final notifier = RecordingSearchNotifier(
+      initialState: SearchState(
+        status: SearchStateStatus.success,
+        rankedShops: [
+          RankedShop(
+            shop: _shop,
+            score: 20,
+            matchReasons: ['Có máy lạnh'],
+          ),
+        ],
+        shops: [_shop],
+        isLoading: false,
+      ),
+    );
+    Object? capturedExtra;
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const SearchScreen(),
+        ),
+        GoRoute(
+          path: '/shop/:slug',
+          builder: (context, state) {
+            capturedExtra = state.extra;
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          searchNotifierProvider.overrideWith((ref) => notifier),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    await tester.drag(find.byType(ListView), const Offset(0, -360));
+    await tester.pump();
+    await tester.tap(find.byType(ShopCard));
+    await tester.pump();
+
+    final extra = capturedExtra;
+    expect(extra, isA<ShopDetailRouteExtra>());
+    final detailExtra = extra! as ShopDetailRouteExtra;
+    expect(detailExtra.initialShop, _shop);
+    expect(detailExtra.matchReasons, ['Có máy lạnh']);
   });
 
   testWidgets('SearchScreen ranked list is always scrollable for refresh',

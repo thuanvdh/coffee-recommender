@@ -1,8 +1,10 @@
 import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
+import 'package:coffee_recommender/features/search/presentation/screens/shop_detail_screen.dart';
 import 'package:coffee_recommender/features/shop_detail/data/repositories/shop_detail_repository.dart';
 import 'package:coffee_recommender/features/shop_detail/presentation/controllers/shop_detail_controller.dart';
 import 'package:coffee_recommender/core/network/dio_client.dart';
+import 'package:coffee_recommender/core/result/app_failure.dart';
 import 'package:coffee_recommender/core/result/result.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +57,33 @@ void main() {
     expect(find.text('Vì sao phù hợp'), findsOneWidget);
     expect(find.text('Có máy lạnh'), findsOneWidget);
   });
+
+  testWidgets('AppRouter passes initial shop extra into ShopDetailScreen',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...getTestOverrides(),
+          shopDetailRepositoryProvider.overrideWith(
+            (ref) => _FailingShopDetailRepository(),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: appRouter),
+      ),
+    );
+
+    appRouter.go(
+      '/shop/goc-yen-binh',
+      extra: const ShopDetailRouteExtra(
+        initialShop: _shop,
+        matchReasons: ['Có máy lạnh'],
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Goc Yen Binh'), findsOneWidget);
+    expect(find.text('Có máy lạnh'), findsOneWidget);
+  });
 }
 
 class _FakeShopDetailRepository extends ShopDetailRepository {
@@ -65,6 +94,15 @@ class _FakeShopDetailRepository extends ShopDetailRepository {
   @override
   Future<Result<CoffeeShop>> fetchBySlug(String slug) async {
     return Result.success(shop);
+  }
+}
+
+class _FailingShopDetailRepository extends ShopDetailRepository {
+  _FailingShopDetailRepository() : super(DioClient(Dio()));
+
+  @override
+  Future<Result<CoffeeShop>> fetchBySlug(String slug) async {
+    return const Result.failure(AppFailure.network());
   }
 }
 

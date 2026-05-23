@@ -92,14 +92,36 @@ class ShopDetailController extends StateNotifier<ShopDetailState> {
   Future<void> retry(String slug) => load(slug);
 }
 
+class ShopDetailControllerArgs {
+  const ShopDetailControllerArgs({
+    required this.slug,
+    this.initialShop,
+  });
+
+  final String slug;
+  final CoffeeShop? initialShop;
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShopDetailControllerArgs &&
+        other.slug == slug &&
+        other.initialShop == initialShop;
+  }
+
+  @override
+  int get hashCode => Object.hash(slug, initialShop);
+}
+
 final shopDetailRepositoryProvider = Provider<ShopDetailRepository>(
   (ref) => ShopDetailRepository(ref.watch(searchDioClientProvider)),
 );
 
-final shopDetailControllerProvider =
-    StateNotifierProvider.family<ShopDetailController, ShopDetailState, String>(
-        (ref, slug) {
+final shopDetailControllerProvider = StateNotifierProvider.family<
+    ShopDetailController,
+    ShopDetailState,
+    ShopDetailControllerArgs>((ref, args) {
   return ShopDetailController(
     ref.watch(shopDetailRepositoryProvider),
-  )..load(slug);
+    initialShop: args.initialShop,
+  )..load(args.slug);
 });

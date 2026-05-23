@@ -20,7 +20,10 @@ void main() {
     slug: 'goc-yen-binh',
     address: '45 Lê Lợi, Hải Châu, Đà Nẵng',
     district: 'Hải Châu',
+    phone: '02361234567',
     status: 'open',
+    latitude: 16.0678,
+    longitude: 108.2208,
     purposes: ['Làm việc', 'Đọc sách'],
     spaces: ['Máy lạnh'],
     amenities: ['WiFi mạnh'],
@@ -51,10 +54,67 @@ void main() {
     expect(find.text('45 Lê Lợi, Hải Châu, Đà Nẵng'), findsOneWidget);
 
     // Verify Info Cards are present
-    expect(find.byIcon(LucideIcons.phone), findsOneWidget);
-    expect(find.byIcon(LucideIcons.navigation), findsOneWidget);
+    expect(find.byIcon(LucideIcons.phone), findsAtLeastNWidgets(1));
+    expect(find.byIcon(LucideIcons.navigation), findsAtLeastNWidgets(1));
     expect(find.byIcon(LucideIcons.clock), findsOneWidget);
     expect(find.byIcon(LucideIcons.dollar_sign), findsOneWidget);
+  });
+
+  testWidgets('ShopDetailScreen renders initial shop when refresh fails',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shopDetailRepositoryProvider.overrideWith(
+            (ref) => _FailingShopDetailRepository(),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShopDetailScreen(
+            slug: 'goc-yen-binh',
+            initialShop: mockShop,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text('Góc Yên Bình'), findsOneWidget);
+    expect(find.byKey(const Key('shopDetailStaleBanner')), findsOneWidget);
+  });
+
+  testWidgets('ShopDetailScreen action controls are visible and tappable',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          shopDetailRepositoryProvider.overrideWith(
+            (ref) => _FakeShopDetailRepository(mockShop),
+          ),
+        ],
+        child: const MaterialApp(
+          home: ShopDetailScreen(slug: 'goc-yen-binh'),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.byKey(const Key('shopDetailActionBar')), findsOneWidget);
+    expect(find.byKey(const Key('shopDetailFavoriteAction')), findsOneWidget);
+    expect(find.byKey(const Key('shopDetailShareAction')), findsOneWidget);
+    expect(find.byKey(const Key('shopDetailDirectionsAction')), findsOneWidget);
+    expect(find.byKey(const Key('shopDetailCallAction')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('shopDetailFavoriteAction')));
+    await tester.pump();
+    expect(find.text('Đã thêm vào danh sách yêu thích'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('shopDetailShareAction')));
+    await tester.tap(find.byKey(const Key('shopDetailDirectionsAction')));
+    await tester.tap(find.byKey(const Key('shopDetailCallAction')));
+    await tester.pump();
   });
 
   testWidgets('ShopDetailScreen renders match reasons',
@@ -110,7 +170,9 @@ void main() {
     expect(find.text('Góc Yên Bình'), findsOneWidget);
 
     await container
-        .read(shopDetailControllerProvider('goc-yen-binh').notifier)
+        .read(shopDetailControllerProvider(
+          const ShopDetailControllerArgs(slug: 'goc-yen-binh'),
+        ).notifier)
         .retry('goc-yen-binh');
     await tester.pump();
 
@@ -144,6 +206,15 @@ class _FakeShopDetailRepository extends ShopDetailRepository {
   @override
   Future<Result<CoffeeShop>> fetchBySlug(String slug) async {
     return Result.success(shop);
+  }
+}
+
+class _FailingShopDetailRepository extends ShopDetailRepository {
+  _FailingShopDetailRepository() : super(DioClient(Dio()));
+
+  @override
+  Future<Result<CoffeeShop>> fetchBySlug(String slug) async {
+    return const Result.failure(AppFailure.network());
   }
 }
 
