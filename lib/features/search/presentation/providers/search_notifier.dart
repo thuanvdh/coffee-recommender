@@ -1,31 +1,35 @@
+import 'package:coffee_recommender/core/network/dio_provider.dart';
 import 'package:coffee_recommender/core/network/dio_client.dart';
 import 'package:coffee_recommender/core/result/app_failure.dart';
 import 'package:coffee_recommender/core/result/result.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/data/repositories/search_repository.dart';
+import 'package:coffee_recommender/features/search/data/repositories/search_submission_repository.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_filter.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:coffee_recommender/features/search/domain/services/search_query_builder.dart';
 import 'package:coffee_recommender/features/search/domain/services/shop_ranking_service.dart';
 import 'package:coffee_recommender/features/search/presentation/state/search_state.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 export 'package:coffee_recommender/features/search/presentation/state/search_state.dart';
 
 class SearchNotifier extends StateNotifier<SearchState> {
   SearchNotifier(
-    this._dioClient, {
+    DioClient dioClient, {
     SearchRepository? repository,
+    SearchSubmissionRepository? submissionRepository,
     SearchQueryBuilder? queryBuilder,
     ShopRankingService? rankingService,
-  })  : _repository = repository ?? SearchRepository(_dioClient),
+  })  : _repository = repository ?? SearchRepository(dioClient),
+        _submissionRepository =
+            submissionRepository ?? SearchSubmissionRepository(dioClient),
         _queryBuilder = queryBuilder ?? SearchQueryBuilder(),
         _rankingService = rankingService ?? ShopRankingService(),
         super(SearchState.initial());
 
-  final DioClient _dioClient;
   final SearchRepository _repository;
+  final SearchSubmissionRepository _submissionRepository;
   final SearchQueryBuilder _queryBuilder;
   final ShopRankingService _rankingService;
   int _searchRequestId = 0;
@@ -286,49 +290,29 @@ class SearchNotifier extends StateNotifier<SearchState> {
     int rating,
     String comment,
   ) async {
-    try {
-      final response = await _dioClient.dio.post(
-        'shops/$shopId/reviews',
-        data: {
-          'user_name': userName,
-          'rating': rating,
-          'comment': comment,
-        },
-      );
-      if ((response.statusCode == 200 || response.statusCode == 201) &&
-          response.data != null) {
-        return Review.fromJson(response.data as Map<String, dynamic>);
-      }
-    } catch (error, stack) {
-      // ignore: avoid_print
-      print('DEBUG: submitReview failed: $error\n$stack');
-    }
-    return null;
+    return _submissionRepository.submitReview(
+      shopId: shopId,
+      userName: userName,
+      rating: rating,
+      comment: comment,
+    );
   }
 
   Future<bool> submitSuggestion(Map<String, dynamic> data) async {
-    try {
-      final response = await _dioClient.dio.post(
-        'suggestions',
-        data: data,
-      );
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (error, stack) {
-      // ignore: avoid_print
-      print('DEBUG: submitSuggestion failed: $error\n$stack');
-      return false;
-    }
+    return _submissionRepository.submitSuggestion(data);
   }
 }
 
-final searchDioProvider = Provider<Dio>((ref) => Dio());
-
 final searchDioClientProvider = Provider<DioClient>(
-  (ref) => DioClient(ref.watch(searchDioProvider)),
+  (ref) => DioClient(ref.watch(dioProvider)),
 );
 
 final searchRepositoryProvider = Provider<SearchRepository>(
   (ref) => SearchRepository(ref.watch(searchDioClientProvider)),
+);
+
+final searchSubmissionRepositoryProvider = Provider<SearchSubmissionRepository>(
+  (ref) => SearchSubmissionRepository(ref.watch(searchDioClientProvider)),
 );
 
 final searchQueryBuilderProvider = Provider<SearchQueryBuilder>(
@@ -345,6 +329,7 @@ final searchNotifierProvider =
   return SearchNotifier(
     dioClient,
     repository: ref.watch(searchRepositoryProvider),
+    submissionRepository: ref.watch(searchSubmissionRepositoryProvider),
     queryBuilder: ref.watch(searchQueryBuilderProvider),
     rankingService: ref.watch(shopRankingServiceProvider),
   )..fetchShops();

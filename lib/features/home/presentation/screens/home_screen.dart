@@ -3,37 +3,25 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:coffee_recommender/core/theme/app_colors.dart';
 import 'package:coffee_recommender/features/discovery/presentation/controllers/discovery_controller.dart';
+import 'package:coffee_recommender/features/home/data/repositories/weather_repository.dart';
 import 'package:coffee_recommender/features/home/presentation/widgets/weather_widget.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:coffee_recommender/features/search/presentation/providers/search_notifier.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/presentation/widgets/shop_card.dart';
 
+final weatherRepositoryProvider = Provider<WeatherRepository>((ref) {
+  return WeatherRepository();
+});
+
 // Weather Provider
 final weatherProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  try {
-    final dio = Dio();
-    final response = await dio.get(
-      'https://api.open-meteo.com/v1/forecast?latitude=16.0544&longitude=108.2022&current_weather=true',
-      options: Options(receiveTimeout: const Duration(seconds: 3)),
-    );
-    if (response.statusCode == 200 && response.data != null) {
-      final current = response.data['current_weather'] as Map<String, dynamic>;
-      return {
-        'temp': (current['temperature'] as num).toDouble(),
-        'code': (current['weathercode'] as num).toInt(),
-      };
-    }
-  } catch (_) {
-    // Fallback Da Nang weather when offline
-  }
-  return {'temp': 28.5, 'code': 1};
+  return ref.watch(weatherRepositoryProvider).fetchCurrentWeather();
 });
 
 final locationClientProvider = Provider<LocationClient>((ref) {

@@ -5,6 +5,7 @@ import 'package:coffee_recommender/core/result/app_failure.dart';
 import 'package:coffee_recommender/core/result/result.dart';
 import 'package:coffee_recommender/features/search/data/models/coffee_shop.dart';
 import 'package:coffee_recommender/features/search/data/repositories/search_repository.dart';
+import 'package:coffee_recommender/features/search/data/repositories/search_submission_repository.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_filter.dart';
 import 'package:coffee_recommender/features/search/domain/models/search_intent.dart';
 import 'package:coffee_recommender/features/search/domain/services/search_query_builder.dart';
@@ -20,15 +21,20 @@ class MockDio extends Mock implements Dio {}
 
 class MockSearchRepository extends Mock implements SearchRepository {}
 
+class MockSearchSubmissionRepository extends Mock
+    implements SearchSubmissionRepository {}
+
 void main() {
   late MockDioClient dioClient;
   late MockDio dio;
   late MockSearchRepository repository;
+  late MockSearchSubmissionRepository submissionRepository;
 
   setUp(() {
     dioClient = MockDioClient();
     dio = MockDio();
     repository = MockSearchRepository();
+    submissionRepository = MockSearchSubmissionRepository();
     when(() => dioClient.dio).thenReturn(dio);
     when(() => repository.cachedShops).thenReturn(const []);
   });
@@ -37,6 +43,7 @@ void main() {
     return SearchNotifier(
       dioClient,
       repository: repository,
+      submissionRepository: submissionRepository,
       queryBuilder: SearchQueryBuilder(),
       rankingService: ShopRankingService(),
     );
@@ -403,6 +410,40 @@ void main() {
       expect(subject.debugState.error, const AppFailure.network().userMessage);
     });
 
+    test('submitReview delegates to submission repository', () async {
+      final review = Review.fromJson(_reviewJson);
+      when(
+        () => submissionRepository.submitReview(
+          shopId: 1,
+          userName: 'Linh',
+          rating: 5,
+          comment: 'Great coffee',
+        ),
+      ).thenAnswer((_) async => review);
+
+      final subject = notifier();
+      final result = await subject.submitReview(
+        1,
+        'Linh',
+        5,
+        'Great coffee',
+      );
+
+      expect(result, review);
+    });
+
+    test('submitSuggestion delegates to submission repository', () async {
+      final suggestion = {'name': 'New Cafe'};
+      when(
+        () => submissionRepository.submitSuggestion(suggestion),
+      ).thenAnswer((_) async => true);
+
+      final subject = notifier();
+      final result = await subject.submitSuggestion(suggestion);
+
+      expect(result, isTrue);
+    });
+
     test('updateQuery changes query state and triggers fetch', () {
       when(
         () => repository.fetchShops(
@@ -511,4 +552,12 @@ const _shopJson = {
   'spaces': ['Yên tĩnh'],
   'created_at': '2026-05-22T00:00:00Z',
   'updated_at': '2026-05-22T00:00:00Z',
+};
+
+const _reviewJson = {
+  'id': 1,
+  'user_name': 'Linh',
+  'rating': 5,
+  'comment': 'Great coffee',
+  'created_at': '2026-05-22T00:00:00Z',
 };
