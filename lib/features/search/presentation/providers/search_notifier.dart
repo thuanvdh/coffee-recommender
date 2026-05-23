@@ -80,6 +80,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
   Future<void> search(SearchIntent intent, {SearchFilter? filter}) async {
     final effectiveFilter = filter ?? SearchFilter();
+    final rankingIntent = _effectiveRankingIntent(
+      intent: intent,
+      filter: effectiveFilter,
+    );
     final requestId = ++_searchRequestId;
     state = _withCompatibilityFields(
       state.copyWith(
@@ -110,19 +114,31 @@ class SearchNotifier extends StateNotifier<SearchState> {
       case Success<List<CoffeeShop>>(:final value):
         _repository.cacheShops(value);
         _setSuccessfulState(
-            intent: intent, filter: effectiveFilter, shops: value);
+          intent: intent,
+          filter: effectiveFilter,
+          rankingIntent: rankingIntent,
+          shops: value,
+        );
       case Failure<List<CoffeeShop>>(:final failure):
         _setFailureState(
-            intent: intent, filter: effectiveFilter, failure: failure);
+          intent: intent,
+          filter: effectiveFilter,
+          rankingIntent: rankingIntent,
+          failure: failure,
+        );
     }
   }
 
   void _setSuccessfulState({
     required SearchIntent intent,
     required SearchFilter filter,
+    required SearchIntent rankingIntent,
     required List<CoffeeShop> shops,
   }) {
-    final rankedShops = _rankingService.rank(shops: shops, intent: intent);
+    final rankedShops = _rankingService.rank(
+      shops: shops,
+      intent: rankingIntent,
+    );
     state = _withCompatibilityFields(
       state.copyWith(
         status: rankedShops.isEmpty
@@ -144,13 +160,14 @@ class SearchNotifier extends StateNotifier<SearchState> {
   void _setFailureState({
     required SearchIntent intent,
     required SearchFilter filter,
+    required SearchIntent rankingIntent,
     required AppFailure failure,
   }) {
     final cachedShops = _repository.cachedShops;
     if (cachedShops.isNotEmpty) {
       final rankedCachedShops = _rankingService.rank(
         shops: cachedShops,
-        intent: intent,
+        intent: rankingIntent,
       );
       state = _withCompatibilityFields(
         state.copyWith(
@@ -182,6 +199,24 @@ class SearchNotifier extends StateNotifier<SearchState> {
       ),
       intent: intent,
       filter: filter,
+    );
+  }
+
+  SearchIntent _effectiveRankingIntent({
+    required SearchIntent intent,
+    required SearchFilter filter,
+  }) {
+    return intent.copyWith(
+      district: filter.district ?? intent.district,
+      purposeTags: filter.purpose == null
+          ? intent.purposeTags
+          : _nullableTag(filter.purpose),
+      amenityTags: filter.amenity == null
+          ? intent.amenityTags
+          : _nullableTag(filter.amenity),
+      spaceTags:
+          filter.space == null ? intent.spaceTags : _nullableTag(filter.space),
+      openNow: filter.openNow ?? intent.openNow,
     );
   }
 

@@ -236,6 +236,48 @@ void main() {
       expect(state.error, isNull);
     });
 
+    test('typed filter purpose and open-now overrides drive ranking reasons',
+        () async {
+      when(
+        () => repository.fetchShops(
+          queryParameters: {
+            'purpose': 'Hẹn hò',
+            'open_now': true,
+          },
+          cacheResult: false,
+        ),
+      ).thenAnswer(
+        (_) async => Result.success([
+          _workOpenShop,
+          _datingClosedShop,
+          _datingOpenShop,
+        ]),
+      );
+
+      final subject = notifier();
+      await subject.search(
+        SearchIntent(purposeTags: ['Làm việc']),
+        filter: SearchFilter(purpose: 'Hẹn hò', openNow: true),
+      );
+
+      final state = subject.debugState;
+      expect(state.intent.purposeTags, ['Làm việc']);
+      expect(state.intent.openNow, isFalse);
+      expect(state.filter.purpose, 'Hẹn hò');
+      expect(state.filter.openNow, isTrue);
+      expect(
+        state.rankedShops.map((item) => item.shop.slug),
+        ['dating-open', 'dating-closed', 'work-open'],
+      );
+      expect(
+        state.rankedShops.first.matchReasons,
+        containsAll([
+          'Phù hợp với mục đích tìm kiếm',
+          'Đang mở cửa',
+        ]),
+      );
+    });
+
     test('fetchShops builds compatibility intent and filter', () async {
       when(
         () => repository.fetchShops(
@@ -302,6 +344,45 @@ void main() {
       expect(subject.debugState.status, SearchStateStatus.stale);
       expect(subject.debugState.shops, [_shop]);
       expect(subject.debugState.failure!.type, AppFailureType.network);
+    });
+
+    test('stale cached results rank with typed filter overrides', () async {
+      when(() => repository.cachedShops).thenReturn([
+        _workOpenShop,
+        _datingClosedShop,
+        _datingOpenShop,
+      ]);
+      when(
+        () => repository.fetchShops(
+          queryParameters: {
+            'purpose': 'Hẹn hò',
+            'open_now': true,
+          },
+          cacheResult: false,
+        ),
+      ).thenAnswer(
+        (_) async => const Result.failure(AppFailure.network()),
+      );
+
+      final subject = notifier();
+      await subject.search(
+        SearchIntent(purposeTags: ['Làm việc']),
+        filter: SearchFilter(purpose: 'Hẹn hò', openNow: true),
+      );
+
+      final state = subject.debugState;
+      expect(state.status, SearchStateStatus.stale);
+      expect(
+        state.rankedShops.map((item) => item.shop.slug),
+        ['dating-open', 'dating-closed', 'work-open'],
+      );
+      expect(
+        state.rankedShops.first.matchReasons,
+        containsAll([
+          'Phù hợp với mục đích tìm kiếm',
+          'Đang mở cửa',
+        ]),
+      );
     });
 
     test('sets failure state when request fails without cache', () async {
@@ -398,6 +479,27 @@ class DelayedSearchRepository extends SearchRepository {
 final _shop = CoffeeShop.fromJson(_shopJson);
 final _olderShop = CoffeeShop.fromJson({..._shopJson, 'id': 2, 'name': 'Old'});
 final _newerShop = CoffeeShop.fromJson({..._shopJson, 'id': 3, 'name': 'New'});
+final _workOpenShop = CoffeeShop.fromJson({
+  ..._shopJson,
+  'id': 4,
+  'name': 'Work Open',
+  'slug': 'work-open',
+});
+final _datingClosedShop = CoffeeShop.fromJson({
+  ..._shopJson,
+  'id': 5,
+  'name': 'Dating Closed',
+  'slug': 'dating-closed',
+  'status': 'closed',
+  'purposes': ['Hẹn hò'],
+});
+final _datingOpenShop = CoffeeShop.fromJson({
+  ..._shopJson,
+  'id': 6,
+  'name': 'Dating Open',
+  'slug': 'dating-open',
+  'purposes': ['Hẹn hò'],
+});
 
 const _shopJson = {
   'id': 1,
