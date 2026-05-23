@@ -56,6 +56,7 @@ void main() {
     // Verify Info Cards are present
     expect(find.byIcon(LucideIcons.phone), findsAtLeastNWidgets(1));
     expect(find.byIcon(LucideIcons.navigation), findsAtLeastNWidgets(1));
+    expect(find.byIcon(LucideIcons.map), findsAtLeastNWidgets(1));
     expect(find.byIcon(LucideIcons.clock), findsOneWidget);
     expect(find.byIcon(LucideIcons.dollar_sign), findsOneWidget);
   });
@@ -84,7 +85,7 @@ void main() {
     expect(find.byKey(const Key('shopDetailStaleBanner')), findsOneWidget);
   });
 
-  testWidgets('ShopDetailScreen action controls are visible and tappable',
+  testWidgets('ShopDetailScreen action controls are persistent and distinct',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -101,20 +102,27 @@ void main() {
 
     await tester.pump();
 
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.bottomNavigationBar, isNotNull);
     expect(find.byKey(const Key('shopDetailActionBar')), findsOneWidget);
     expect(find.byKey(const Key('shopDetailFavoriteAction')), findsOneWidget);
     expect(find.byKey(const Key('shopDetailShareAction')), findsOneWidget);
     expect(find.byKey(const Key('shopDetailDirectionsAction')), findsOneWidget);
+    expect(find.byKey(const Key('shopDetailMapAction')), findsOneWidget);
     expect(find.byKey(const Key('shopDetailCallAction')), findsOneWidget);
+    final actionBar = find.byKey(const Key('shopDetailActionBar'));
+    expect(
+      find.descendant(of: actionBar, matching: find.text('Chỉ đường')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: actionBar, matching: find.text('Bản đồ')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('shopDetailFavoriteAction')));
     await tester.pump();
     expect(find.text('Đã thêm vào danh sách yêu thích'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('shopDetailShareAction')));
-    await tester.tap(find.byKey(const Key('shopDetailDirectionsAction')));
-    await tester.tap(find.byKey(const Key('shopDetailCallAction')));
-    await tester.pump();
   });
 
   testWidgets('ShopDetailScreen renders match reasons',

@@ -63,15 +63,32 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
     );
     final detailState = ref.watch(shopDetailControllerProvider(detailArgs));
     final shop = detailState.shop;
+    final favoriteList = ref.watch(favoritesProvider);
+    final isFav = shop != null && favoriteList.contains(shop.slug);
 
     return Scaffold(
+      bottomNavigationBar: shop != null
+          ? _ShopActionBar(
+              shop: shop,
+              isFavorite: isFav,
+              onToggleFavorite: () {
+                ref.read(favoritesProvider.notifier).toggleFavorite(shop.slug);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(isFav
+                        ? 'Đã xóa khỏi danh sách yêu thích'
+                        : 'Đã thêm vào danh sách yêu thích'),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
+              },
+            )
+          : null,
       body: shop != null
           ? Builder(
               builder: (context) {
                 final isDark = theme.brightness == Brightness.dark;
                 final isOpen = shop.status.toLowerCase() == 'open';
-                final favoriteList = ref.watch(favoritesProvider);
-                final isFav = favoriteList.contains(shop.slug);
 
                 // Collect all image URLs for carousel
                 final List<String> imageUrls = [];
@@ -337,25 +354,6 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                 const SizedBox(height: 16.0),
                               ],
 
-                              _ShopActionBar(
-                                shop: shop,
-                                isFavorite: isFav,
-                                onToggleFavorite: () {
-                                  ref
-                                      .read(favoritesProvider.notifier)
-                                      .toggleFavorite(shop.slug);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(isFav
-                                          ? 'Đã xóa khỏi danh sách yêu thích'
-                                          : 'Đã thêm vào danh sách yêu thích'),
-                                      duration: const Duration(seconds: 1),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 24.0),
-
                               // Sidebar Details Grid (2x2 key facts)
                               _SidebarInfoGrid(shop: shop),
                               const SizedBox(height: 24.0),
@@ -525,7 +523,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
 
                               // Reviews List
                               _ReviewsList(reviews: shop.reviews),
-                              const SizedBox(height: 40.0),
+                              const SizedBox(height: 128.0),
                             ],
                           ),
                         ),
@@ -773,66 +771,135 @@ class _ShopActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final canOpenMap = _ShopDetailActions.hasMapTarget(shop);
     final canCall = _ShopDetailActions.hasPhone(shop);
+    final theme = Theme.of(context);
 
-    return Wrap(
+    return Material(
       key: const Key('shopDetailActionBar'),
-      spacing: 10.0,
-      runSpacing: 10.0,
-      children: [
-        _ActionPill(
-          key: const Key('shopDetailFavoriteAction'),
-          icon: LucideIcons.heart,
-          label: isFavorite ? 'Đã lưu' : 'Yêu thích',
-          onPressed: onToggleFavorite,
+      color: theme.colorScheme.surface,
+      elevation: 12.0,
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16.0, 10.0, 16.0, 12.0),
+        child: Row(
+          children: [
+            _ActionIconButton(
+              key: const Key('shopDetailFavoriteAction'),
+              icon: LucideIcons.heart,
+              label: isFavorite ? 'Đã lưu' : 'Yêu thích',
+              isSelected: isFavorite,
+              onPressed: onToggleFavorite,
+            ),
+            const SizedBox(width: 8.0),
+            _ActionIconButton(
+              key: const Key('shopDetailShareAction'),
+              icon: LucideIcons.share_2,
+              label: 'Chia sẻ',
+              onPressed: () => _ShopDetailActions.share(context, shop),
+            ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              child: FilledButton.icon(
+                key: const Key('shopDetailDirectionsAction'),
+                onPressed: canOpenMap
+                    ? () => _ShopDetailActions.openDirections(context, shop)
+                    : null,
+                icon: const Icon(LucideIcons.navigation, size: 18.0),
+                label: const Text('Chỉ đường'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 48.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            _ActionIconButton(
+              key: const Key('shopDetailMapAction'),
+              icon: LucideIcons.map,
+              label: 'Bản đồ',
+              onPressed: canOpenMap
+                  ? () => _ShopDetailActions.openMap(context, shop)
+                  : null,
+            ),
+            const SizedBox(width: 8.0),
+            _ActionIconButton(
+              key: const Key('shopDetailCallAction'),
+              icon: LucideIcons.phone,
+              label: 'Gọi',
+              onPressed:
+                  canCall ? () => _ShopDetailActions.call(context, shop) : null,
+            ),
+          ],
         ),
-        _ActionPill(
-          key: const Key('shopDetailShareAction'),
-          icon: LucideIcons.share_2,
-          label: 'Chia sẻ',
-          onPressed: () => _ShopDetailActions.share(context, shop),
-        ),
-        _ActionPill(
-          key: const Key('shopDetailDirectionsAction'),
-          icon: LucideIcons.navigation,
-          label: 'Chỉ đường',
-          onPressed: canOpenMap
-              ? () => _ShopDetailActions.openMap(context, shop)
-              : null,
-        ),
-        _ActionPill(
-          key: const Key('shopDetailCallAction'),
-          icon: LucideIcons.phone,
-          label: 'Gọi',
-          onPressed:
-              canCall ? () => _ShopDetailActions.call(context, shop) : null,
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
+class _ActionIconButton extends StatelessWidget {
+  const _ActionIconButton({
     super.key,
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.isSelected = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback? onPressed;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.tonalIcon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16.0),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(0, 44.0),
-        padding: const EdgeInsets.symmetric(horizontal: 14.0),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    final theme = Theme.of(context);
+    final color = isSelected
+        ? const Color(0xFFEF4444)
+        : theme.colorScheme.onSurface.withOpacity(0.78);
+
+    return Tooltip(
+      message: label,
+      child: SizedBox(
+        width: 52.0,
+        height: 58.0,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox.square(
+              dimension: 38.0,
+              child: IconButton.filledTonal(
+                onPressed: onPressed,
+                icon: Icon(
+                  icon,
+                  size: 18.0,
+                  color: onPressed == null ? null : color,
+                ),
+                style: IconButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+            const SizedBox(height: 3.0),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: onPressed == null
+                      ? theme.disabledColor
+                      : theme.colorScheme.onSurface.withOpacity(0.72),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -887,6 +954,30 @@ class _ShopDetailActions {
     }
   }
 
+  static Future<void> openDirections(
+    BuildContext context,
+    CoffeeShop shop,
+  ) async {
+    final uri = _directionsUri(shop);
+    if (uri == null) {
+      _showFailure(context, 'Chưa có thông tin chỉ đường cho quán này.');
+      return;
+    }
+
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && context.mounted) {
+        _showFailure(context, 'Không thể mở chỉ đường lúc này.');
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      _showFailure(context, 'Không thể mở chỉ đường lúc này.');
+    }
+  }
+
   static Future<void> call(BuildContext context, CoffeeShop shop) async {
     final phone = shop.phone?.trim();
     if (phone == null || phone.isEmpty) {
@@ -906,6 +997,26 @@ class _ShopDetailActions {
   }
 
   static Uri? _mapUri(CoffeeShop shop) {
+    final query = _mapQuery(shop);
+    if (query == null) return null;
+
+    return Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': query,
+    });
+  }
+
+  static Uri? _directionsUri(CoffeeShop shop) {
+    final destination = _mapQuery(shop);
+    if (destination == null) return null;
+
+    return Uri.https('www.google.com', '/maps/dir/', {
+      'api': '1',
+      'destination': destination,
+    });
+  }
+
+  static String? _mapQuery(CoffeeShop shop) {
     final query = switch ((shop.latitude, shop.longitude)) {
       (final double latitude, final double longitude) => '$latitude,$longitude',
       _ => [shop.name, shop.address]
@@ -914,11 +1025,7 @@ class _ShopDetailActions {
           .join(', '),
     };
     if (query.trim().isEmpty) return null;
-
-    return Uri.https('www.google.com', '/maps/search/', {
-      'api': '1',
-      'query': query,
-    });
+    return query;
   }
 
   static void _showFailure(BuildContext context, String message) {
