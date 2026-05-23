@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'coffee_shop.freezed.dart';
@@ -38,7 +40,8 @@ class ShopImage with _$ShopImage {
     @JsonKey(name: 'alt_text') String? altText,
   }) = _ShopImage;
 
-  factory ShopImage.fromJson(Map<String, dynamic> json) => _$ShopImageFromJson(json);
+  factory ShopImage.fromJson(Map<String, dynamic> json) =>
+      _$ShopImageFromJson(json);
 }
 
 @freezed
@@ -68,5 +71,6 @@ class CoffeeShop with _$CoffeeShop {
     @JsonKey(name: 'updated_at') required String updatedAt,
   }) = _CoffeeShop;
 
-  factory CoffeeShop.fromJson(Map<String, dynamic> json) => _$CoffeeShopFromJson(json);
+  factory CoffeeShop.fromJson(Map<String, dynamic> json) =>
+      _$CoffeeShopFromJson(json);
 }

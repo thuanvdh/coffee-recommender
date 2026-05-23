@@ -12,7 +12,7 @@ void main() {
 
   test('failure keeps typed failure', () {
     const failure = AppFailure.timeout();
-    final result = const Result<int>.failure(failure);
+    const result = Result<int>.failure(failure);
 
     expect(result.isFailure, true);
     expect(result.failureOrNull, failure);

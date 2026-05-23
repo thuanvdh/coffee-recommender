@@ -48,7 +48,8 @@ class WeatherWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+    final primaryColor =
+        isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
     final cardBgColor = isDark ? AppColors.darkBgLight : AppColors.lightBgLight;
     final iconColor = _getWeatherIconColor(isDark);
@@ -59,12 +60,12 @@ class WeatherWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: cardBgColor.withOpacity(0.85),
+          color: cardBgColor.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: borderColor, width: 1.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -91,7 +92,9 @@ class WeatherWidget extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.darkTextLight : AppColors.lightTextLight,
+                    color: isDark
+                        ? AppColors.darkTextLight
+                        : AppColors.lightTextLight,
                   ),
                 ),
               ],
@@ -123,4 +126,3 @@ class WeatherWidget extends StatelessWidget {
     );
   }
 }
-

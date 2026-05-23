@@ -14,7 +14,7 @@ void main() {
 
     await controller.initialized;
 
-    expect(controller.debugState, isEmpty);
+    expect(controller.state, isEmpty);
   });
 
   test('loads existing stored slugs with preserved key', () async {
@@ -26,7 +26,7 @@ void main() {
 
     await controller.initialized;
 
-    expect(controller.debugState, ['slow-bar', 'filter-house']);
+    expect(controller.state, ['slow-bar', 'filter-house']);
   });
 
   test('toggles slug on', () async {
@@ -37,7 +37,7 @@ void main() {
     await controller.toggleFavorite('slow-bar');
 
     final prefs = await SharedPreferences.getInstance();
-    expect(controller.debugState, ['slow-bar']);
+    expect(controller.state, ['slow-bar']);
     expect(controller.isFavorite('slow-bar'), isTrue);
     expect(prefs.getStringList(favoriteShopSlugsKey), ['slow-bar']);
   });
@@ -53,7 +53,7 @@ void main() {
     await controller.toggleFavorite('slow-bar');
 
     final prefs = await SharedPreferences.getInstance();
-    expect(controller.debugState, isEmpty);
+    expect(controller.state, isEmpty);
     expect(controller.isFavorite('slow-bar'), isFalse);
     expect(prefs.getStringList(favoriteShopSlugsKey), isEmpty);
   });

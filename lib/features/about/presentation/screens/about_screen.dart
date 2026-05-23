@@ -9,12 +9,14 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
-    final accentColor = isDark ? AppColors.darkAccent : AppColors.lightAccent;
-    final textLightColor = isDark ? AppColors.darkTextLight : AppColors.lightTextLight;
+    final primaryColor =
+        isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+    final textLightColor =
+        isDark ? AppColors.darkTextLight : AppColors.lightTextLight;
     final cardBgColor = isDark ? AppColors.darkBgLight : AppColors.lightBgLight;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
-    final sectionBgColor = isDark ? AppColors.darkBgSection : AppColors.lightBgSection;
+    final sectionBgColor =
+        isDark ? AppColors.darkBgSection : AppColors.lightBgSection;
 
     return Scaffold(
       appBar: AppBar(
@@ -24,7 +26,8 @@ class AboutScreen extends StatelessWidget {
         children: [
           // Section 1: Hero
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -96,7 +99,8 @@ class AboutScreen extends StatelessWidget {
           // Section 3: Why Choose Us
           Container(
             color: sectionBgColor,
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
             child: Column(
               children: [
                 Text(
@@ -108,22 +112,25 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                                const _FeatureCard(
+                const _FeatureCard(
                   icon: LucideIcons.square_check,
                   title: 'Thông tin chính xác',
-                  description: 'Dữ liệu được cập nhật thường xuyên về giờ mở cửa, giá cả và tiện ích.',
+                  description:
+                      'Dữ liệu được cập nhật thường xuyên về giờ mở cửa, giá cả và tiện ích.',
                 ),
                 const SizedBox(height: 16),
                 const _FeatureCard(
                   icon: LucideIcons.sliders_horizontal,
                   title: 'Tìm kiếm thông minh',
-                  description: 'Bộ lọc đa dạng giúp bạn tìm quán theo mục đích sử dụng và phong cách không gian.',
+                  description:
+                      'Bộ lọc đa dạng giúp bạn tìm quán theo mục đích sử dụng và phong cách không gian.',
                 ),
                 const SizedBox(height: 16),
                 const _FeatureCard(
                   icon: LucideIcons.users,
                   title: 'Cộng đồng đóng góp',
-                  description: 'Mọi người đều có thể gửi đề xuất quán mới để làm phong phú thêm cẩm nang.',
+                  description:
+                      'Mọi người đều có thể gửi đề xuất quán mới để làm phong phú thêm cẩm nang.',
                 ),
               ],
             ),
@@ -137,7 +144,7 @@ class AboutScreen extends StatelessWidget {
                 '© 2026 Danang Coffee. Crafted with ❤️.',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: textLightColor.withOpacity(0.8),
+                  color: textLightColor.withValues(alpha: 0.8),
                 ),
               ),
             ),
@@ -162,8 +169,10 @@ class _FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
-    final textLightColor = isDark ? AppColors.darkTextLight : AppColors.lightTextLight;
+    final primaryColor =
+        isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+    final textLightColor =
+        isDark ? AppColors.darkTextLight : AppColors.lightTextLight;
     final accentColor = isDark ? AppColors.darkAccent : AppColors.lightAccent;
     final cardBgColor = isDark ? AppColors.darkBgLight : AppColors.lightBgLight;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
@@ -181,7 +190,7 @@ class _FeatureCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
+              color: accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: accentColor, size: 20),
@@ -216,4 +225,3 @@ class _FeatureCard extends StatelessWidget {
     );
   }
 }
-

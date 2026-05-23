@@ -126,7 +126,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                       leading: Container(
                         margin: const EdgeInsets.all(8.0),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.4),
+                          color: Colors.black.withValues(alpha: 0.4),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -139,7 +139,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                         Container(
                           margin: const EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.4),
+                            color: Colors.black.withValues(alpha: 0.4),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -178,13 +178,15 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                   imageUrl: imageUrls[index],
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
-                                    color: theme.colorScheme.surfaceVariant,
+                                    color: theme
+                                        .colorScheme.surfaceContainerHighest,
                                     child: const Center(
                                         child: CircularProgressIndicator()),
                                   ),
                                   errorWidget: (context, url, error) =>
                                       Container(
-                                    color: theme.colorScheme.surfaceVariant,
+                                    color: theme
+                                        .colorScheme.surfaceContainerHighest,
                                     child: const Icon(LucideIcons.image_off,
                                         size: 64.0),
                                   ),
@@ -219,7 +221,8 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                     count: imageUrls.length,
                                     effect: ExpandingDotsEffect(
                                       activeDotColor: const Color(0xFFC17A2F),
-                                      dotColor: Colors.white.withOpacity(0.5),
+                                      dotColor:
+                                          Colors.white.withValues(alpha: 0.5),
                                       dotHeight: 6.0,
                                       dotWidth: 6.0,
                                       expansionFactor: 4,
@@ -263,9 +266,9 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                     decoration: BoxDecoration(
                                       color: isOpen
                                           ? const Color(0xFF10B981)
-                                              .withOpacity(0.15)
+                                              .withValues(alpha: 0.15)
                                           : const Color(0xFFEF4444)
-                                              .withOpacity(0.15),
+                                              .withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(30.0),
                                       border: Border.all(
                                         color: isOpen
@@ -306,7 +309,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                     '(${shop.reviews.length} đánh giá)',
                                     style: TextStyle(
                                       color: theme.colorScheme.onSurface
-                                          .withOpacity(0.5),
+                                          .withValues(alpha: 0.5),
                                       fontSize: 13.0,
                                     ),
                                   ),
@@ -315,7 +318,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                     '•',
                                     style: TextStyle(
                                         color: theme.colorScheme.onSurface
-                                            .withOpacity(0.3)),
+                                            .withValues(alpha: 0.3)),
                                   ),
                                   const SizedBox(width: 8.0),
                                   Icon(
@@ -367,7 +370,8 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                     borderRadius: BorderRadius.circular(12.0),
                                     border: Border.all(
                                       color: theme.colorScheme.outline
-                                          .withOpacity(isDark ? 0.2 : 0.08),
+                                          .withValues(
+                                              alpha: isDark ? 0.2 : 0.08),
                                     ),
                                   ),
                                   child: Row(
@@ -399,7 +403,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                                   ?.copyWith(
                                                 color: theme
                                                     .colorScheme.onSurface
-                                                    .withOpacity(0.7),
+                                                    .withValues(alpha: 0.7),
                                                 height: 1.4,
                                               ),
                                             ),
@@ -415,7 +419,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                               // Divider
                               Divider(
                                   color: theme.colorScheme.outline
-                                      .withOpacity(isDark ? 0.15 : 0.08)),
+                                      .withValues(alpha: isDark ? 0.15 : 0.08)),
                               const SizedBox(height: 20.0),
 
                               // Match Reasons
@@ -491,7 +495,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                                     : 'Quán cà phê mang phong cách thiết kế hiện đại, tinh tế. Không gian rộng rãi, thoáng mát thích hợp cho cả nhu cầu học tập, làm việc hiệu quả lẫn gặp gỡ trò chuyện cùng bạn bè. Menu đa dạng từ các loại cà phê specialty thơm ngon tới bánh ngọt nướng nóng hổi mỗi ngày.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onSurface
-                                      .withOpacity(0.7),
+                                      .withValues(alpha: 0.7),
                                   height: 1.5,
                                 ),
                               ),
@@ -500,7 +504,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                               // Divider
                               Divider(
                                   color: theme.colorScheme.outline
-                                      .withOpacity(isDark ? 0.15 : 0.08)),
+                                      .withValues(alpha: isDark ? 0.15 : 0.08)),
                               const SizedBox(height: 24.0),
 
                               // Menu Section (Categorized)
@@ -510,7 +514,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                               // Divider
                               Divider(
                                   color: theme.colorScheme.outline
-                                      .withOpacity(isDark ? 0.15 : 0.08)),
+                                      .withValues(alpha: isDark ? 0.15 : 0.08)),
                               const SizedBox(height: 24.0),
 
                               // Add Review Form
@@ -565,9 +569,9 @@ class _StaleShopDetailBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14.0),
       decoration: BoxDecoration(
-        color: errorColor.withOpacity(0.08),
+        color: errorColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: errorColor.withOpacity(0.22)),
+        border: Border.all(color: errorColor.withValues(alpha: 0.22)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,7 +586,7 @@ class _StaleShopDetailBanner extends StatelessWidget {
             child: Text(
               message,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                 height: 1.35,
               ),
             ),
@@ -621,10 +625,11 @@ class _ShopDetailRefreshIndicator extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
+          color:
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(12.0),
           border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.08),
+            color: theme.colorScheme.outline.withValues(alpha: 0.08),
           ),
         ),
         child: Row(
@@ -641,7 +646,7 @@ class _ShopDetailRefreshIndicator extends StatelessWidget {
             Text(
               'Đang cập nhật...',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -704,7 +709,7 @@ class _ShopDetailErrorView extends StatelessWidget {
             Text(
               message,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -737,17 +742,17 @@ class _DetailChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.15 : 0.08),
+        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(30.0),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           width: 1.0,
         ),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: isDark ? color.withOpacity(0.9) : color,
+          color: isDark ? color.withValues(alpha: 0.9) : color,
           fontSize: 12.0,
           fontWeight: FontWeight.w600,
         ),
@@ -859,7 +864,7 @@ class _ActionIconButton extends StatelessWidget {
     final theme = Theme.of(context);
     final color = isSelected
         ? const Color(0xFFEF4444)
-        : theme.colorScheme.onSurface.withOpacity(0.78);
+        : theme.colorScheme.onSurface.withValues(alpha: 0.78);
 
     return Tooltip(
       message: label,
@@ -893,7 +898,7 @@ class _ActionIconButton extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: onPressed == null
                       ? theme.disabledColor
-                      : theme.colorScheme.onSurface.withOpacity(0.72),
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.72),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1058,7 +1063,8 @@ class _InfoCard extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
+          color:
+              theme.colorScheme.outline.withValues(alpha: isDark ? 0.15 : 0.08),
         ),
       ),
       child: Column(
@@ -1074,7 +1080,7 @@ class _InfoCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -1226,7 +1232,8 @@ class _MenuSectionState extends State<_MenuSection> {
             border: Border.all(
               color: isSelected
                   ? const Color(0xFFC17A2F)
-                  : theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
+                  : theme.colorScheme.outline
+                      .withValues(alpha: isDark ? 0.15 : 0.08),
             ),
           ),
           child: Text(
@@ -1253,7 +1260,7 @@ class _MenuSectionState extends State<_MenuSection> {
         child: Text(
           emptyMessage,
           style: TextStyle(
-            color: theme.colorScheme.onSurface.withOpacity(0.5),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -1266,7 +1273,8 @@ class _MenuSectionState extends State<_MenuSection> {
       itemCount: items.length,
       separatorBuilder: (context, index) => Divider(
         height: 1.0,
-        color: theme.colorScheme.outline.withOpacity(isDark ? 0.12 : 0.06),
+        color:
+            theme.colorScheme.outline.withValues(alpha: isDark ? 0.12 : 0.06),
       ),
       itemBuilder: (context, index) {
         final item = items[index];
@@ -1294,7 +1302,8 @@ class _MenuSectionState extends State<_MenuSection> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6.0, vertical: 2.0),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B).withOpacity(0.12),
+                              color: const Color(0xFFF59E0B)
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(4.0),
                               border: Border.all(
                                   color: const Color(0xFFF59E0B), width: 0.6),
@@ -1323,7 +1332,8 @@ class _MenuSectionState extends State<_MenuSection> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6.0, vertical: 2.0),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEF4444).withOpacity(0.12),
+                              color: const Color(0xFFEF4444)
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(4.0),
                               border: Border.all(
                                   color: const Color(0xFFEF4444), width: 0.6),
@@ -1451,7 +1461,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
             'Chia sẻ trải nghiệm thực tế của bạn tại quán để giúp cộng đồng lựa chọn tốt hơn.',
             style: TextStyle(
               fontSize: 12.5,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 16.0),
@@ -1611,7 +1621,7 @@ class _ReviewsList extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
+                color: theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12.0),
               ),
               child: Text(
@@ -1634,8 +1644,8 @@ class _ReviewsList extends StatelessWidget {
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12.0),
               border: Border.all(
-                color:
-                    theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
+                color: theme.colorScheme.outline
+                    .withValues(alpha: isDark ? 0.15 : 0.08),
               ),
             ),
             alignment: Alignment.center,
@@ -1643,12 +1653,12 @@ class _ReviewsList extends StatelessWidget {
               children: [
                 Icon(LucideIcons.message_square,
                     size: 36.0,
-                    color: theme.colorScheme.outline.withOpacity(0.5)),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.5)),
                 const SizedBox(height: 8.0),
                 Text(
                   'Chưa có đánh giá nào',
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1656,7 +1666,7 @@ class _ReviewsList extends StatelessWidget {
                 Text(
                   'Hãy là người đầu tiên chia sẻ cảm nhận về quán!',
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     fontSize: 11.5,
                   ),
                 ),
@@ -1684,7 +1694,7 @@ class _ReviewsList extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.0),
                   border: Border.all(
                     color: theme.colorScheme.outline
-                        .withOpacity(isDark ? 0.15 : 0.08),
+                        .withValues(alpha: isDark ? 0.15 : 0.08),
                   ),
                 ),
                 child: Column(
@@ -1736,7 +1746,7 @@ class _ReviewsList extends StatelessWidget {
                                     _formatDate(review.createdAt),
                                     style: TextStyle(
                                       color: theme.colorScheme.onSurface
-                                          .withOpacity(0.4),
+                                          .withValues(alpha: 0.4),
                                       fontSize: 11.0,
                                     ),
                                   ),
@@ -1754,8 +1764,8 @@ class _ReviewsList extends StatelessWidget {
                         child: Text(
                           comment,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color:
-                                theme.colorScheme.onSurface.withOpacity(0.85),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.85),
                             height: 1.4,
                           ),
                         ),

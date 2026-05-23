@@ -309,10 +309,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       margin: const EdgeInsets.only(bottom: 12.0),
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.errorContainer.withOpacity(0.35),
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(8.0),
         border: Border.all(
-          color: theme.colorScheme.error.withOpacity(0.16),
+          color: theme.colorScheme.error.withValues(alpha: 0.16),
         ),
       ),
       child: Row(

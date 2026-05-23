@@ -159,20 +159,30 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
       'shop_name': _nameController.text.trim(),
       'district': _selectedDistrict,
       'address': _addressController.text.trim(),
-      'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-      'image_url': _imageUrlController.text.trim().isEmpty 
-          ? 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb' 
+      'phone': _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
+      'image_url': _imageUrlController.text.trim().isEmpty
+          ? 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb'
           : _imageUrlController.text.trim(),
-      'description': _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+      'description': _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
       'opening_hours': openingHours,
       'price_range': priceRange,
       'purposes': _selectedPurposes,
       'spaces': _selectedSpaces,
       'amenities': _selectedAmenities,
       'drinks': drinkList,
-      'contributor_name': _contributorNameController.text.trim().isEmpty ? null : _contributorNameController.text.trim(),
-      'contributor_email': _contributorEmailController.text.trim().isEmpty ? null : _contributorEmailController.text.trim(),
-      'reason': _reasonController.text.trim().isEmpty ? null : _reasonController.text.trim(),
+      'contributor_name': _contributorNameController.text.trim().isEmpty
+          ? null
+          : _contributorNameController.text.trim(),
+      'contributor_email': _contributorEmailController.text.trim().isEmpty
+          ? null
+          : _contributorEmailController.text.trim(),
+      'reason': _reasonController.text.trim().isEmpty
+          ? null
+          : _reasonController.text.trim(),
     };
 
     final notifier = ref.read(searchNotifierProvider.notifier);
@@ -185,7 +195,8 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Không thể gửi đề xuất. Vui lòng kiểm tra lại thông tin.'),
+            content:
+                Text('Không thể gửi đề xuất. Vui lòng kiểm tra lại thông tin.'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -219,9 +230,11 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+    final primaryColor =
+        isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
     final accentColor = isDark ? AppColors.darkAccent : AppColors.lightAccent;
-    final textLightColor = isDark ? AppColors.darkTextLight : AppColors.lightTextLight;
+    final textLightColor =
+        isDark ? AppColors.darkTextLight : AppColors.lightTextLight;
     final cardBgColor = isDark ? AppColors.darkBgLight : AppColors.lightBgLight;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
@@ -236,7 +249,7 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 Container(
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1),
+                    color: accentColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -268,7 +281,8 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 ElevatedButton(
                   onPressed: _resetForm,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 16),
                   ),
                   child: const Text('Gửi thêm đề xuất'),
                 ),
@@ -334,7 +348,10 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 const SizedBox(height: 20),
 
                 // Section 1: Basic Info
-                _SectionHeader(icon: LucideIcons.map_pin, title: 'Thông tin cơ bản', color: primaryColor),
+                _SectionHeader(
+                    icon: LucideIcons.map_pin,
+                    title: 'Thông tin cơ bản',
+                    color: primaryColor),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _nameController,
@@ -342,22 +359,34 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                     labelText: 'Tên quán cà phê *',
                     hintText: 'Ví dụ: Lumi Lab',
                   ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Vui lòng nhập tên quán' : null,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Vui lòng nhập tên quán'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: _selectedDistrict,
+                        initialValue: _selectedDistrict,
                         decoration: const InputDecoration(
                           labelText: 'Quận *',
                         ),
-                        items: ['Hải Châu', 'Thanh Khê', 'Sơn Trà', 'Ngũ Hành Sơn', 'Liên Chiểu', 'Cẩm Lệ']
-                            .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                        items: [
+                          'Hải Châu',
+                          'Thanh Khê',
+                          'Sơn Trà',
+                          'Ngũ Hành Sơn',
+                          'Liên Chiểu',
+                          'Cẩm Lệ'
+                        ]
+                            .map((d) =>
+                                DropdownMenuItem(value: d, child: Text(d)))
                             .toList(),
                         onChanged: (val) {
-                          if (val != null) setState(() => _selectedDistrict = val);
+                          if (val != null) {
+                            setState(() => _selectedDistrict = val);
+                          }
                         },
                       ),
                     ),
@@ -381,12 +410,17 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                     labelText: 'Địa chỉ chi tiết *',
                     hintText: 'Ví dụ: 99 Lê Lợi',
                   ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Vui lòng nhập địa chỉ' : null,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Vui lòng nhập địa chỉ'
+                      : null,
                 ),
                 const SizedBox(height: 20),
 
                 // Section 2: Hours & Prices
-                _SectionHeader(icon: LucideIcons.clock, title: 'Hoạt động & Giá cả', color: primaryColor),
+                _SectionHeader(
+                    icon: LucideIcons.clock,
+                    title: 'Hoạt động & Giá cả',
+                    color: primaryColor),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -426,9 +460,13 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                           labelText: 'Giá thấp nhất (VNĐ) *',
                         ),
                         validator: (val) {
-                          if (val == null || val.isEmpty) return 'Nhập giá tối thiểu';
+                          if (val == null || val.isEmpty) {
+                            return 'Nhập giá tối thiểu';
+                          }
                           final num = int.tryParse(val);
-                          if (num == null) return 'Sai định dạng';
+                          if (num == null) {
+                            return 'Sai định dạng';
+                          }
                           return null;
                         },
                         onChanged: (val) => _minPrice = int.tryParse(val) ?? 0,
@@ -443,10 +481,16 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                           labelText: 'Giá cao nhất (VNĐ) *',
                         ),
                         validator: (val) {
-                          if (val == null || val.isEmpty) return 'Nhập giá tối đa';
+                          if (val == null || val.isEmpty) {
+                            return 'Nhập giá tối đa';
+                          }
                           final num = int.tryParse(val);
-                          if (num == null) return 'Sai định dạng';
-                          if (num < _minPrice) return 'Phải lớn hơn giá tối thiểu';
+                          if (num == null) {
+                            return 'Sai định dạng';
+                          }
+                          if (num < _minPrice) {
+                            return 'Phải lớn hơn giá tối thiểu';
+                          }
                           return null;
                         },
                         onChanged: (val) => _maxPrice = int.tryParse(val) ?? 0,
@@ -457,11 +501,17 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 const SizedBox(height: 20),
 
                 // Section 3: Tags
-                _SectionHeader(icon: LucideIcons.tags, title: 'Tags phân loại', color: primaryColor),
+                _SectionHeader(
+                    icon: LucideIcons.tags,
+                    title: 'Tags phân loại',
+                    color: primaryColor),
                 const SizedBox(height: 12),
                 Text(
                   'Mục đích',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: primaryColor),
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: primaryColor),
                 ),
                 const SizedBox(height: 6),
                 _TagChips(
@@ -473,7 +523,10 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Không gian',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: primaryColor),
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: primaryColor),
                 ),
                 const SizedBox(height: 6),
                 _TagChips(
@@ -485,7 +538,10 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Tiện ích',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: primaryColor),
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: primaryColor),
                 ),
                 const SizedBox(height: 6),
                 _TagChips(
@@ -497,7 +553,10 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 const SizedBox(height: 20),
 
                 // Section 4: Signature Drinks
-                _SectionHeader(icon: LucideIcons.coffee, title: 'Thức uống nổi bật', color: primaryColor),
+                _SectionHeader(
+                    icon: LucideIcons.coffee,
+                    title: 'Thức uống nổi bật',
+                    color: primaryColor),
                 const SizedBox(height: 12),
                 ...List.generate(_drinks.length, (idx) {
                   return Padding(
@@ -510,7 +569,8 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Tên món',
                               hintText: 'VD: Cà phê muối',
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
                             ),
                             onChanged: (val) => _drinks[idx]['name'] = val,
                           ),
@@ -522,13 +582,15 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
                               labelText: 'Giá (VD: 35000)',
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
                             ),
                             onChanged: (val) => _drinks[idx]['price'] = val,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(LucideIcons.trash_2, color: Colors.redAccent),
+                          icon: const Icon(LucideIcons.trash_2,
+                              color: Colors.redAccent),
                           onPressed: () => _removeDrink(idx),
                         )
                       ],
@@ -549,7 +611,10 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                 const SizedBox(height: 20),
 
                 // Section 5: Media & Desc
-                _SectionHeader(icon: LucideIcons.image, title: 'Hình ảnh & Mô tả', color: primaryColor),
+                _SectionHeader(
+                    icon: LucideIcons.image,
+                    title: 'Hình ảnh & Mô tả',
+                    color: primaryColor),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _imageUrlController,
@@ -564,13 +629,17 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Giới thiệu ngắn về quán',
-                    hintText: 'Không không gian chill, hợp làm việc, nhiều góc checkin...',
+                    hintText:
+                        'Không không gian chill, hợp làm việc, nhiều góc checkin...',
                   ),
                 ),
                 const SizedBox(height: 20),
 
                 // Section 6: Contributor Info
-                _SectionHeader(icon: LucideIcons.user, title: 'Thông tin người đề xuất', color: primaryColor),
+                _SectionHeader(
+                    icon: LucideIcons.user,
+                    title: 'Thông tin người đề xuất',
+                    color: primaryColor),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -619,7 +688,7 @@ class _SuggestScreenState extends ConsumerState<SuggestScreen> {
           ),
           if (_isLoading)
             Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               child: const Center(
                 child: CircularProgressIndicator(),
               ),
@@ -689,4 +758,3 @@ class _TagChips extends StatelessWidget {
     );
   }
 }
-

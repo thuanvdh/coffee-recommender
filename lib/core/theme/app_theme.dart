@@ -12,8 +12,7 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: AppColors.lightPrimary,
         secondary: AppColors.lightAccent,
-        background: AppColors.lightBg,
-        surface: AppColors.lightBgLight,
+        surface: AppColors.lightBg,
         outline: AppColors.lightBorder,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
@@ -47,10 +46,10 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.lightBg,
-        indicatorColor: AppColors.lightPrimary.withOpacity(0.08),
+        indicatorColor: AppColors.lightPrimary.withValues(alpha: 0.08),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -63,8 +62,8 @@ class AppTheme {
             color: AppColors.lightTextLight,
           );
         }),
-        iconTheme: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.lightPrimary, size: 24);
           }
           return const IconThemeData(color: AppColors.lightTextLight, size: 24);
@@ -72,7 +71,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.lightBgSection,
-        selectedColor: AppColors.lightAccent.withOpacity(0.15),
+        selectedColor: AppColors.lightAccent.withValues(alpha: 0.15),
         disabledColor: Colors.grey.shade200,
         side: const BorderSide(color: AppColors.lightBorder, width: 1.0),
         labelStyle: GoogleFonts.inter(
@@ -118,11 +117,16 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
-          borderSide: const BorderSide(color: AppColors.lightAccent, width: 1.5),
+          borderSide:
+              const BorderSide(color: AppColors.lightAccent, width: 1.5),
         ),
-        labelStyle: GoogleFonts.inter(color: AppColors.lightTextLight, fontSize: 14),
-        hintStyle: GoogleFonts.inter(color: AppColors.lightTextLight.withOpacity(0.6), fontSize: 14),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        labelStyle:
+            GoogleFonts.inter(color: AppColors.lightTextLight, fontSize: 14),
+        hintStyle: GoogleFonts.inter(
+            color: AppColors.lightTextLight.withValues(alpha: 0.6),
+            fontSize: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       ),
     );
   }
@@ -134,8 +138,7 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: AppColors.darkPrimary,
         secondary: AppColors.darkAccent,
-        background: AppColors.darkBg,
-        surface: AppColors.darkBgLight,
+        surface: AppColors.darkBg,
         outline: AppColors.darkBorder,
         onPrimary: AppColors.darkBg,
         onSecondary: AppColors.darkBg,
@@ -169,10 +172,10 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.darkBg,
-        indicatorColor: AppColors.darkPrimary.withOpacity(0.08),
+        indicatorColor: AppColors.darkPrimary.withValues(alpha: 0.08),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        labelTextStyle: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -185,8 +188,8 @@ class AppTheme {
             color: AppColors.darkTextLight,
           );
         }),
-        iconTheme: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.darkPrimary, size: 24);
           }
           return const IconThemeData(color: AppColors.darkTextLight, size: 24);
@@ -194,7 +197,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.darkBgSection,
-        selectedColor: AppColors.darkAccent.withOpacity(0.15),
+        selectedColor: AppColors.darkAccent.withValues(alpha: 0.15),
         disabledColor: Colors.grey.shade800,
         side: const BorderSide(color: AppColors.darkBorder, width: 1.0),
         labelStyle: GoogleFonts.inter(
@@ -242,9 +245,13 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8.0),
           borderSide: const BorderSide(color: AppColors.darkAccent, width: 1.5),
         ),
-        labelStyle: GoogleFonts.inter(color: AppColors.darkTextLight, fontSize: 14),
-        hintStyle: GoogleFonts.inter(color: AppColors.darkTextLight.withOpacity(0.6), fontSize: 14),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        labelStyle:
+            GoogleFonts.inter(color: AppColors.darkTextLight, fontSize: 14),
+        hintStyle: GoogleFonts.inter(
+            color: AppColors.darkTextLight.withValues(alpha: 0.6),
+            fontSize: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       ),
     );
   }

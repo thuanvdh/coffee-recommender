@@ -46,12 +46,13 @@ class ShopCard extends ConsumerWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
+          color:
+              theme.colorScheme.outline.withValues(alpha: isDark ? 0.15 : 0.08),
           width: 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
             blurRadius: 10.0,
             offset: const Offset(0, 4),
           ),
@@ -80,18 +81,18 @@ class ShopCard extends ConsumerWidget {
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: theme.colorScheme.surfaceVariant,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         child: const Center(
                           child: CircularProgressIndicator(strokeWidth: 2.0),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        color: theme.colorScheme.surfaceVariant,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         child: Icon(
                           LucideIcons.image_off,
                           size: 40.0,
                           color: theme.colorScheme.onSurfaceVariant
-                              .withOpacity(0.5),
+                              .withValues(alpha: 0.5),
                         ),
                       ),
                     ),
@@ -103,10 +104,10 @@ class ShopCard extends ConsumerWidget {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withOpacity(0.35),
+                              Colors.black.withValues(alpha: 0.35),
                               Colors.transparent,
                               Colors.transparent,
-                              Colors.black.withOpacity(0.45),
+                              Colors.black.withValues(alpha: 0.45),
                             ],
                             stops: const [0.0, 0.3, 0.7, 1.0],
                           ),
@@ -123,13 +124,13 @@ class ShopCard extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: isOpen
                               ? const Color(0xFF10B981)
-                                  .withOpacity(0.9) // Emerald green
+                                  .withValues(alpha: 0.9) // Emerald green
                               : const Color(0xFFEF4444)
-                                  .withOpacity(0.9), // Coral red
+                                  .withValues(alpha: 0.9), // Coral red
                           borderRadius: BorderRadius.circular(30.0),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -167,10 +168,10 @@ class ShopCard extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.4),
+                            color: Colors.black.withValues(alpha: 0.4),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               width: 1.0,
                             ),
                           ),
@@ -192,10 +193,10 @@ class ShopCard extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10.0, vertical: 5.0),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(30.0),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.15),
+                              color: Colors.white.withValues(alpha: 0.15),
                               width: 1.0,
                             ),
                           ),
@@ -268,7 +269,7 @@ class ShopCard extends ConsumerWidget {
                               '(${shop.reviews.length})',
                               style: TextStyle(
                                 color: theme.colorScheme.onSurface
-                                    .withOpacity(0.4),
+                                    .withValues(alpha: 0.4),
                                 fontSize: 11.0,
                               ),
                             ),
@@ -284,7 +285,8 @@ class ShopCard extends ConsumerWidget {
                           Icon(
                             LucideIcons.map_pin,
                             size: 13.0,
-                            color: theme.colorScheme.onSurface.withOpacity(0.4),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.4),
                           ),
                           const SizedBox(width: 4.0),
                           Expanded(
@@ -292,7 +294,7 @@ class ShopCard extends ConsumerWidget {
                               shop.address ?? '',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurface
-                                    .withOpacity(0.55),
+                                    .withValues(alpha: 0.55),
                                 fontSize: 12.0,
                               ),
                               maxLines: 1,
@@ -355,17 +357,17 @@ class _ShopTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.5),
       decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.15 : 0.08),
+        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(6.0),
         border: Border.all(
-          color: color.withOpacity(0.18),
+          color: color.withValues(alpha: 0.18),
           width: 0.8,
         ),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: isDark ? color.withOpacity(0.9) : color,
+          color: isDark ? color.withValues(alpha: 0.9) : color,
           fontSize: 10.5,
           fontWeight: FontWeight.w600,
         ),
