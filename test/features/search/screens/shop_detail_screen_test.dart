@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:coffee_recommender/core/result/app_failure.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,6 +81,59 @@ void main() {
     expect(find.text('Có máy lạnh'), findsOneWidget);
     expect(find.text('Yên tĩnh'), findsOneWidget);
   });
+
+  testWidgets('ShopDetailScreen shows stale banner and retries',
+      (WidgetTester tester) async {
+    final retryCompleter = Completer<Result<CoffeeShop>>();
+    final repository = _SequencedShopDetailRepository([
+      () async => const Result.success(mockShop),
+      () async => const Result.failure(AppFailure.network()),
+      () => retryCompleter.future,
+    ]);
+    final container = ProviderContainer(
+      overrides: [
+        shopDetailRepositoryProvider.overrideWith((ref) => repository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: ShopDetailScreen(slug: 'goc-yen-binh'),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    expect(find.text('Góc Yên Bình'), findsOneWidget);
+
+    await container
+        .read(shopDetailControllerProvider('goc-yen-binh').notifier)
+        .retry('goc-yen-binh');
+    await tester.pump();
+
+    expect(find.byKey(const Key('shopDetailStaleBanner')), findsOneWidget);
+    expect(
+      find.text('Khong co ket noi mang. Kiem tra internet va thu lai.'),
+      findsOneWidget,
+    );
+    expect(find.text('Góc Yên Bình'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('shopDetailStaleRetryButton')));
+    await tester.pump();
+
+    expect(repository.fetchCount, 3);
+    expect(find.byKey(const Key('shopDetailRefreshIndicator')), findsOneWidget);
+    expect(find.text('Góc Yên Bình'), findsOneWidget);
+
+    retryCompleter.complete(const Result.success(mockShop));
+    await tester.pump();
+
+    expect(find.byKey(const Key('shopDetailStaleBanner')), findsNothing);
+    expect(find.byKey(const Key('shopDetailRefreshIndicator')), findsNothing);
+  });
 }
 
 class _FakeShopDetailRepository extends ShopDetailRepository {
@@ -88,5 +144,20 @@ class _FakeShopDetailRepository extends ShopDetailRepository {
   @override
   Future<Result<CoffeeShop>> fetchBySlug(String slug) async {
     return Result.success(shop);
+  }
+}
+
+typedef _ShopDetailResponse = Future<Result<CoffeeShop>> Function();
+
+class _SequencedShopDetailRepository extends ShopDetailRepository {
+  _SequencedShopDetailRepository(this._responses) : super(DioClient(Dio()));
+
+  final List<_ShopDetailResponse> _responses;
+  int fetchCount = 0;
+
+  @override
+  Future<Result<CoffeeShop>> fetchBySlug(String slug) {
+    final index = fetchCount++;
+    return _responses[index]();
   }
 }

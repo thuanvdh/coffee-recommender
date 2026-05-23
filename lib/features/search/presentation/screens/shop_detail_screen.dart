@@ -308,6 +308,25 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                               ),
                               const SizedBox(height: 20.0),
 
+                              if (detailState.status ==
+                                      ShopDetailStatus.stale &&
+                                  detailState.failure != null) ...[
+                                _StaleShopDetailBanner(
+                                  message: detailState.failure!.userMessage,
+                                  onRetry: () => ref
+                                      .read(shopDetailControllerProvider(
+                                              widget.slug)
+                                          .notifier)
+                                      .retry(widget.slug),
+                                ),
+                                const SizedBox(height: 16.0),
+                              ],
+
+                              if (detailState.isLoading) ...[
+                                const _ShopDetailRefreshIndicator(),
+                                const SizedBox(height: 16.0),
+                              ],
+
                               // Sidebar Details Grid (2x2 key facts)
                               _SidebarInfoGrid(shop: shop),
                               const SizedBox(height: 24.0),
@@ -492,6 +511,112 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen> {
                       .retry(widget.slug),
                 )
               : const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _StaleShopDetailBanner extends StatelessWidget {
+  const _StaleShopDetailBanner({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final errorColor = theme.colorScheme.error;
+
+    return Container(
+      key: const Key('shopDetailStaleBanner'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: errorColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: errorColor.withOpacity(0.22)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            LucideIcons.triangle_alert,
+            color: errorColor,
+            size: 18.0,
+          ),
+          const SizedBox(width: 10.0),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                height: 1.35,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8.0),
+          TextButton.icon(
+            key: const Key('shopDetailStaleRetryButton'),
+            onPressed: onRetry,
+            icon: const Icon(LucideIcons.refresh_cw, size: 14.0),
+            label: const Text('Thử lại'),
+            style: TextButton.styleFrom(
+              foregroundColor: errorColor,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShopDetailRefreshIndicator extends StatelessWidget {
+  const _ShopDetailRefreshIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Semantics(
+      label: 'Đang cập nhật thông tin quán',
+      child: Container(
+        key: const Key('shopDetailRefreshIndicator'),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
+          borderRadius: BorderRadius.circular(12.0),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.08),
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 16.0,
+              height: 16.0,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.0,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 10.0),
+            Text(
+              'Đang cập nhật...',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
