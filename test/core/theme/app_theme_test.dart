@@ -13,7 +13,7 @@ void main() {
       expect(theme.brightness, Brightness.light);
       expect(theme.colorScheme.primary, AppColors.lightPrimary);
       expect(theme.colorScheme.secondary, AppColors.lightAccent);
-      expect(theme.colorScheme.surface, AppColors.lightBg);
+      expect(theme.colorScheme.surface, AppColors.lightBgLight);
     });
 
     testWidgets('Dark theme properties are configured correctly',
@@ -23,7 +23,7 @@ void main() {
       expect(theme.brightness, Brightness.dark);
       expect(theme.colorScheme.primary, AppColors.darkPrimary);
       expect(theme.colorScheme.secondary, AppColors.darkAccent);
-      expect(theme.colorScheme.surface, AppColors.darkBg);
+      expect(theme.colorScheme.surface, AppColors.darkBgLight);
     });
   });
 }

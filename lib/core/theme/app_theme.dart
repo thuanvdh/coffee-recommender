@@ -12,7 +12,7 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: AppColors.lightPrimary,
         secondary: AppColors.lightAccent,
-        surface: AppColors.lightBg,
+        surface: AppColors.lightBgLight,
         outline: AppColors.lightBorder,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
@@ -138,7 +138,7 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: AppColors.darkPrimary,
         secondary: AppColors.darkAccent,
-        surface: AppColors.darkBg,
+        surface: AppColors.darkBgLight,
         outline: AppColors.darkBorder,
         onPrimary: AppColors.darkBg,
         onSecondary: AppColors.darkBg,
